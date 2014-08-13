@@ -1,0 +1,19 @@
+.GitDashboard.main-view {
+  background: white;
+}
+
+.GitDashboard .welcome-view {
+  background: #eee;
+
+  height: auto;
+  width: auto;
+  max-width: 300px;
+
+  padding:10px;
+  margin: 50px auto;
+
+  border: 1px solid #ccc;
+  border-radius: 4px;
+
+  text-align:center;
+}
