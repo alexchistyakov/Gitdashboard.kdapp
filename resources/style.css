@@ -1,5 +1,34 @@
-.GitDashboard.main-view {
-  background: white;
+.GitDashboard {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  text-align:center;
+}
+.GitDashboard .tab-view {
+    width: 100%;
+    height: auto;
+    overflow:auto;
+    text-align: center;
+}
+.GitDashboard .tab-view .handle-container{
+    text-align: center;
+}
+.GitDashboard .tab-view .handle {
+    
+}
+.GitDashboard .login-button {
+    width: 100%;
+    height:60px;
+    background-color:#eee;
+    border-bottom: 1px solid #ccc;
+    text-align:center;
+    font-size: 30px;
+    color: #444;
+}
+.GitDashboard .container{
+  width: 600px;
+  margin: 50px auto 20px auto;
+  overflow: visible;
 }
 
 .GitDashboard .welcome-view {
@@ -16,4 +45,79 @@
   border-radius: 4px;
 
   text-align:center;
+}
+.GitDashboard .boxedlist-container{
+    text-align: center;
+    height:auto;
+    padding:10px 0;
+    width:600px;
+}
+.GitDashboard .boxedlist-container .box-header{
+    width:100%;
+    background-color:#eee;
+    border: 1px solid #ccc;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    
+}
+.GitDashboard .boxedlist-container .seemore-button{
+    width:100%;
+    background:#eee;
+    border: 1px solid #ccc;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    font-size:20px;
+    color: #444;
+}
+.GitDashboard .boxedlist-container .list{
+    height:auto;
+    overflow:auto;
+    width:100%;
+    border-left: solid #ccc;
+    border-width: 0px 1px;
+}
+.GitDashboard .repoview-container{
+    width:100%;
+    background:#fff;
+    border-bottom: 1px solid #ccc;
+    text-align: left;
+    font-size:20px;
+    color: #444;
+}
+.GitDashboard .repoview-container .gravatar{
+    padding:5px;
+    border-radius: 4px;
+}
+.GitDashboard .repoview-container .name{
+    position:absolute;
+    top:0;
+    margin-top:8px;
+}
+.GitDashboard .repoview-container .languageLabel{
+    position:absolute;
+    top:0;
+    right:0;
+    margin-right:80px;
+    margin-top:3px;
+    font-size:12px;
+}
+.GitDashboard .repoview-container .starsLabel{
+    position:absolute;
+    top:0;
+    right:0;
+    font-size:12px;
+    margin-right:200px;
+    margin-top:3px;
+}
+.GitDashboard .repoview-container .description{
+    font-size:16px;
+    padding: 5px;
+}
+.GitDashboard .clone-button{
+    position:absolute;
+    top:0;
+    right:0;
+    margin:3px;
+    width:70px;
+    height:30px;
 }
