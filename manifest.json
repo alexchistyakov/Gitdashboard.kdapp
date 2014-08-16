@@ -8,7 +8,7 @@
   "path": "~/Applications/Gitdashboard",
   "homepage": "alexchistyakov.kd.io/gitdashboard",
   "repository": "git://github.com/alexchistyakov/gitdashboard.kdapp.git",
-  "description": "GitDashboard : a Koding application created with the blank template.",
+  "description": "A dashboard for Github in a KDApp",
   "category": "web-app",
   "source": {
     "blocks": {
