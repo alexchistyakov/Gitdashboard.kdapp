@@ -45,7 +45,8 @@ class RepoView extends KDListItemView
             callback: @cloneToMachine
             cssClass: "cupid-green clone-button"
     cloneToMachine: (vm,path)=>
-        console.log "Cloned"
+        new GitdashboardCloneModal
+            repoView: this
     click:(event) ->
         {url} = @getOptions()
         window.open url,"_blank"

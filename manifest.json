@@ -17,6 +17,8 @@
           "./oauth.js",
           "./config.coffee",
           "./utils/utils.coffee",
+          "./views/vmselector.coffee",
+          "./modal/clonemodal.coffee",
           "./views/repoview.coffee",
           "./views/boxedlistview.coffee",
           "./controller/repodatacontroller.coffee",

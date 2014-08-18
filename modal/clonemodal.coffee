@@ -7,7 +7,6 @@ class GitdashboardCloneModal extends KDModalView
     @finderController = new NFinderController
         hideDotFiles:true
     @finderController.isNodesHiddenFor = -> true
-    
     super options, data
   viewAppended:->
     @addSubView new VMSelectorView
@@ -27,6 +26,5 @@ class GitdashboardCloneModal extends KDModalView
     @finderController.mountVm vm
     @currentVm = vm
   beginClone: =>
-    @repoView.cloneToMachine @currentVm, "PATH GOES HERE"
-
+    console.log @fileController.treeController.selectedNodes[0]
   

@@ -1,4 +1,4 @@
-/* Compiled by kdc on Mon Aug 18 2014 19:38:12 GMT+0000 (UTC) */
+/* Compiled by kdc on Mon Aug 18 2014 21:20:57 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1222,17 +1222,15 @@ module.exports = function(document) {
 };
 
 },{}]},{},[4])/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
-var maxSymbolsInDescription, reposInTrending, reposPerTopic, searchKeywords, userInfo;
+var maxSymbolsInDescription, reposInTrending, reposPerTopic, searchKeywords;
 
 searchKeywords = ["3D Modeling", "Data Visualization", "Game Engines", "Software Development tools", "Design Essentials", "Package Manager", "CSS Preprocessors"];
 
 reposInTrending = 50;
 
-reposPerTopic = 20;
+reposPerTopic = 10;
 
 maxSymbolsInDescription = 100;
-
-userInfo = null;
 /* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/utils.coffee */
 var bubbleSort, flatten;
 
