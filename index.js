@@ -1,4 +1,4 @@
-/* Compiled by kdc on Sat Aug 16 2014 23:10:17 GMT+0000 (UTC) */
+/* Compiled by kdc on Mon Aug 18 2014 19:38:12 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1330,7 +1330,7 @@ RepoView = (function(_super) {
     }));
   };
 
-  RepoView.prototype.cloneToMachine = function() {
+  RepoView.prototype.cloneToMachine = function(vm, path) {
     return console.log("Cloned");
   };
 

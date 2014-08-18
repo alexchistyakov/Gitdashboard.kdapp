@@ -44,7 +44,7 @@ class RepoView extends KDListItemView
             title: "Clone"
             callback: @cloneToMachine
             cssClass: "cupid-green clone-button"
-    cloneToMachine: =>
+    cloneToMachine: (vm,path)=>
         console.log "Cloned"
     click:(event) ->
         {url} = @getOptions()
