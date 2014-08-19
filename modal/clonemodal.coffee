@@ -19,20 +19,19 @@ class GitdashboardCloneModal extends KDModalView
     @finderController.unmountVm vm.hostnameAlias for vm in @finderController.vms
     super options, data
   viewAppended:->
-    console.log @kiteHelper
-    @addSubView @vmSelector
-    @addSubView @nameInput = new KDInputView
-        placeholder: "Name"
-    @addSubView @finderController.getView()
-    @addSubView new KDButtonView 
-        title: "Clone to my VM"
-        cssClass: "cupid-green"
-        callback: @beginClone
-    @addSubView new KDButtonView
-        title: "Cancel"
-        callback: @cancel
+    @kiteHelper.getReady().then =>
+        @addSubView @vmSelector
+        @addSubView @nameInput = new KDInputView
+            placeholder: "Name"
+        @addSubView @finderController.getView()
+        @addSubView new KDButtonView 
+            title: "Clone to my VM"
+            cssClass: "cupid-green"
+            callback: @beginClone
+        @addSubView new KDButtonView
+            title: "Cancel"
+            callback: @cancel
   switchVM: (vm) =>
-    console.log vm
     @finderController.unmountVm @currentVm if @currentVm?
     @finderController.mountVm @kiteHelper.getVmByName vm
     @currentVm = vm

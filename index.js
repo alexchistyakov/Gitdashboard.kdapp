@@ -1,4 +1,4 @@
-/* Compiled by kdc on Tue Aug 19 2014 19:35:13 GMT+0000 (UTC) */
+/* Compiled by kdc on Tue Aug 19 2014 20:37:38 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1486,8 +1486,10 @@ VMSelectorView = (function(_super) {
   }
 
   VMSelectorView.prototype.viewAppended = function() {
+    console.log("Appended");
     return this.kiteHelper.getReady().then((function(_this) {
       return function() {
+        console.log("Ready");
         _this.addSubView(_this.header = new KDCustomHTMLView({
           tagName: 'div',
           cssClass: 'header',
@@ -1510,6 +1512,7 @@ VMSelectorView = (function(_super) {
     var vmController;
     this.selection.updatePartial("");
     vmController = KD.singletons.vmController;
+    console.log("Iteration begin");
     return this.kiteHelper.getVms().forEach((function(_this) {
       return function(vm) {
         var vmItem;
@@ -1522,21 +1525,26 @@ VMSelectorView = (function(_super) {
             }
           }
         }));
+        console.log("View added");
         if (vm.hostnameAlias === _this.kiteHelper.getVm()) {
           vmItem.setClass("active");
         }
+        console.log("Active checked");
         vmItem.addSubView(new KDCustomHTMLView({
           tagName: 'span',
           cssClass: "bubble"
         }));
+        console.log("Active checked 1");
         vmItem.addSubView(new KDCustomHTMLView({
           tagName: 'span',
           cssClass: "name",
           partial: _this.namify(vm.hostnameAlias)
         }));
-        return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
+        console.log("Active checked 2");
+        vmController.info(vm.hostnameAlias, function(err, vmn, info) {
           return vmItem.setClass(info != null ? info.state.toLowerCase() : void 0);
         });
+        return console.log("VM is loaded");
       };
     })(this));
   };
@@ -1666,25 +1674,27 @@ GitdashboardCloneModal = (function(_super) {
   }
 
   GitdashboardCloneModal.prototype.viewAppended = function() {
-    console.log(this.kiteHelper);
-    this.addSubView(this.vmSelector);
-    this.addSubView(this.nameInput = new KDInputView({
-      placeholder: "Name"
-    }));
-    this.addSubView(this.finderController.getView());
-    this.addSubView(new KDButtonView({
-      title: "Clone to my VM",
-      cssClass: "cupid-green",
-      callback: this.beginClone
-    }));
-    return this.addSubView(new KDButtonView({
-      title: "Cancel",
-      callback: this.cancel
-    }));
+    return this.kiteHelper.getReady().then((function(_this) {
+      return function() {
+        _this.addSubView(_this.vmSelector);
+        _this.addSubView(_this.nameInput = new KDInputView({
+          placeholder: "Name"
+        }));
+        _this.addSubView(_this.finderController.getView());
+        _this.addSubView(new KDButtonView({
+          title: "Clone to my VM",
+          cssClass: "cupid-green",
+          callback: _this.beginClone
+        }));
+        return _this.addSubView(new KDButtonView({
+          title: "Cancel",
+          callback: _this.cancel
+        }));
+      };
+    })(this));
   };
 
   GitdashboardCloneModal.prototype.switchVM = function(vm) {
-    console.log(vm);
     if (this.currentVm != null) {
       this.finderController.unmountVm(this.currentVm);
     }
