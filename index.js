@@ -1,10 +1,10 @@
-/* Compiled by kdc on Sat Aug 16 2014 23:10:17 GMT+0000 (UTC) */
+/* Compiled by kdc on Tue Aug 19 2014 21:44:41 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
   var appView = window.appPreview
 }
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/oauth.js */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/oauth.js */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = {
   oauthd_url: "https://oauth.io",
@@ -1221,10 +1221,12 @@ module.exports = function(document) {
   };
 };
 
-},{}]},{},[4])/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
-var maxSymbolsInDescription, reposInTrending, reposPerTopic, searchKeywords, userInfo;
+},{}]},{},[4])/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/config.coffee */
+var maxSymbolsInDescription, reposInTrending, reposPerTopic, searchKeywords, searchResultCount, userInfo;
 
 searchKeywords = ["3D Modeling", "Data Visualization", "Game Engines", "Software Development tools", "Design Essentials", "Package Manager", "CSS Preprocessors"];
+
+searchResultCount = 50;
 
 reposInTrending = 50;
 
@@ -1233,7 +1235,7 @@ reposPerTopic = 20;
 maxSymbolsInDescription = 100;
 
 userInfo = null;
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/utils.coffee */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/utils/utils.coffee */
 var bubbleSort, flatten;
 
 flatten = function(matrix) {
@@ -1261,7 +1263,7 @@ bubbleSort = function(array) {
   }
   return modified;
 };
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/repoview.coffee */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/views/repoview.coffee */
 var RepoView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1343,7 +1345,7 @@ RepoView = (function(_super) {
   return RepoView;
 
 })(KDListItemView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/boxedlistview.coffee */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/views/boxedlistview.coffee */
 var BoxedListView,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1386,7 +1388,7 @@ BoxedListView = (function(_super) {
   return BoxedListView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
 var RepoDataController,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1396,6 +1398,7 @@ RepoDataController = (function(_super) {
   __extends(RepoDataController, _super);
 
   function RepoDataController() {
+    this.getSearchedRepos = __bind(this.getSearchedRepos, this);
     this.getTrendingRepos = __bind(this.getTrendingRepos, this);
     return RepoDataController.__super__.constructor.apply(this, arguments);
   }
@@ -1417,7 +1420,7 @@ RepoDataController = (function(_super) {
     return Promise.all(searchKeywords.map((function(_this) {
       return function(topic) {
         var link;
-        link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars&order=desc");
+        link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars");
         return $.getJSON(link).then(function(json) {
           var i, _i, _results;
           _results = [];
@@ -1448,6 +1451,23 @@ RepoDataController = (function(_super) {
     })(this))["catch"](function(err) {
       return console.log(err);
     });
+  };
+
+  RepoDataController.prototype.getSearchedRepos = function(callback, topic) {
+    var link;
+    link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars");
+    return $.getJSON(link).then((function(_this) {
+      return function(json) {
+        var i, _i, _results;
+        _results = [];
+        for (i = _i = 0; 0 <= searchResultCount ? _i < searchResultCount : _i > searchResultCount; i = 0 <= searchResultCount ? ++_i : --_i) {
+          if (json.items[i] != null) {
+            _results.push(callback(_this.repoViewFromJson(json.items[i])));
+          }
+        }
+        return _results;
+      };
+    })(this));
   };
 
   RepoDataController.prototype.getMyRepos = function(callback, authToken) {
@@ -1482,7 +1502,7 @@ RepoDataController = (function(_super) {
   return RepoDataController;
 
 })(KDController);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/trendingpageview.coffee */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/views/trendingpageview.coffee */
 var GitDashboardTrendingPageView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1502,20 +1522,33 @@ GitDashboardTrendingPageView = (function(_super) {
   }
 
   GitDashboardTrendingPageView.prototype.viewAppended = function() {
-    this.addSubView(this.container = new KDListView({
+    this.container = new KDListView({
       cssClass: "container"
+    });
+    this.addSubView(this.searchBox = new KDInputView({
+      cssClass: "searchBox",
+      placeholder: "Search..."
     }));
+    this.searchBox.on('keydown', (function(_this) {
+      return function(e) {
+        if (e.keyCode === 13) {
+          _this.container.empty();
+          return _this.controller.getSearchedRepos(_this.repoReceived, _this.searchBox.getValue());
+        }
+      };
+    })(this));
+    this.addSubView(this.container);
     return this.controller.getTrendingRepos(this.repoReceived);
   };
 
   GitDashboardTrendingPageView.prototype.repoReceived = function(repoView) {
-    return this.container.addSubView(repoView);
+    return this.container.addItemView(repoView);
   };
 
   return GitDashboardTrendingPageView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/myrepospageview.coffee */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/views/myrepospageview.coffee */
 var GitDashboardMyReposPageView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1552,7 +1585,7 @@ GitDashboardMyReposPageView = (function(_super) {
   return GitDashboardMyReposPageView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/mainview.coffee */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/views/mainview.coffee */
 var GitDashboardMainView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1621,7 +1654,7 @@ GitDashboardMainView = (function(_super) {
   return GitDashboardMainView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/index.coffee */
+/* BLOCK STARTS: /home/glang/Applications/Gitdashboard.kdapp/index.coffee */
 var GitDashboardController,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };

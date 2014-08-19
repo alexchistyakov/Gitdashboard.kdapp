@@ -5,9 +5,17 @@ class GitDashboardTrendingPageView extends KDView
     options.cssClass = 'Gitdashboard'
     super options, data
 
-  viewAppended:->
-    @addSubView @container = new KDListView
-        cssClass:"container"
+  viewAppended:->     
+    @container = new KDListView
+      cssClass:"container"
+    @addSubView @searchBox = new KDInputView
+      cssClass: "searchBox"
+      placeholder: "Search..."
+    @searchBox.on 'keydown', (e) =>
+      if e.keyCode is 13
+        @container.empty()
+        @controller.getSearchedRepos(@repoReceived, @searchBox.getValue())
+    @addSubView @container
     @controller.getTrendingRepos(@repoReceived)
   repoReceived: (repoView) =>
-    @container.addSubView repoView
+    @container.addItemView repoView

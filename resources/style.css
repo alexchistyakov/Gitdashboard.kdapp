@@ -27,7 +27,7 @@
 }
 .GitDashboard .container{
   width: 600px;
-  margin: 50px auto 20px auto;
+  margin: 10px auto 20px auto;
   overflow: visible;
 }
 
@@ -46,6 +46,12 @@
 
   text-align:center;
 }
+
+.GitDashboard .searchBox {
+    height: 40px !important;
+    width: 600px !important;
+}
+
 .GitDashboard .boxedlist-container{
     text-align: center;
     height:auto;
