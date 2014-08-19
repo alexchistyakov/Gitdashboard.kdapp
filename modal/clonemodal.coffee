@@ -4,27 +4,36 @@ class GitdashboardCloneModal extends KDModalView
     @repoView = options.repoView
     
     @kiteHelper = new KiteHelper
+    console.log @kiteHelper
     @finderController = new NFinderController
         hideDotFiles:true
+        nodeIdPath: "path"
+        nodeParentIdPath: "parentPath"
+        foldersOnly: true
+        contextMenu: false
+        loadFilesOnInit: true
     @finderController.isNodesHiddenFor = -> true
     super options, data
   viewAppended:->
+    console.log @kiteHelper
     @addSubView new VMSelectorView
         callback: @switchVM
-        kitHelper: @kiteHelper
-    @addSubView @nameInput new KDInputView
+        kiteHelper: @kiteHelper
+    @addSubView @nameInput = new KDInputView
         placeholder: "Name"
     @addSubView @finderController.getView()
     @addSubView new KDButtonView 
         title: "Clone to my VM"
-        cssClass: "cupid green"
+        cssClass: "cupid-green"
         callback: @beginClone
     @addSubView new KDButtonView
         title: "Cancel"
         callback: @cancel
   switchVM: (vm) =>
-    @finderController.mountVm vm
+    console.log vm
+    @finderController.unmountVm @kiteHelper.getVmByName @currentVm
+    @finderController.mountVm @kiteHelper.getVmByName vm
     @currentVm = vm
   beginClone: =>
-    console.log @fileController.treeController.selectedNodes[0]
+    console.log @finderController.treeController.selectedNodes[0]
   

@@ -1,4 +1,4 @@
-/* Compiled by kdc on Mon Aug 18 2014 21:20:57 GMT+0000 (UTC) */
+/* Compiled by kdc on Tue Aug 19 2014 00:43:39 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1231,6 +1231,213 @@ reposInTrending = 50;
 reposPerTopic = 10;
 
 maxSymbolsInDescription = 100;
+/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
+var KiteHelper,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+KiteHelper = (function(_super) {
+  __extends(KiteHelper, _super);
+
+  function KiteHelper(options, data) {
+    var kiteHelperController;
+    if (options == null) {
+      options = {};
+    }
+    this.vmIsStarting = false;
+    kiteHelperController = KD.singletons.kiteHelperController;
+    if (kiteHelperController) {
+      return kiteHelperController;
+    }
+    this.registerSingleton("kiteHelperController", this, true);
+    KiteHelper.__super__.constructor.call(this, options, data);
+  }
+
+  KiteHelper.prototype.getReady = function() {
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        var JVM;
+        JVM = KD.remote.api.JVM;
+        return JVM.fetchVmsByContext(function(err, vms) {
+          var alias, kiteController, vm, _i, _len;
+          if (err) {
+            console.warn(err);
+          }
+          if (!vms) {
+            return;
+          }
+          _this._vms = vms;
+          _this._kites = {};
+          kiteController = KD.singletons.kiteController;
+          for (_i = 0, _len = vms.length; _i < _len; _i++) {
+            vm = vms[_i];
+            alias = vm.hostnameAlias;
+            _this._kites[alias] = kiteController.getKite("os-" + vm.region, alias, 'os');
+          }
+          _this.emit('ready');
+          return resolve();
+        });
+      };
+    })(this));
+  };
+
+  KiteHelper.prototype.setDefaultVm = function(vm) {
+    this.defaultVm = vm;
+    return this.vmIsStarting = false;
+  };
+
+  KiteHelper.prototype.getVm = function() {
+    if (this.defaultVm == null) {
+      this.defaultVm = this._vms.first.hostnameAlias;
+    }
+    return this.defaultVm;
+  };
+
+  KiteHelper.prototype.getVmByName = function(name) {
+    var vm, _i, _len, _ref;
+    _ref = this._vms;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      vm = _ref[_i];
+      if (vm.hostnameAlias === name) {
+        return vm;
+      }
+    }
+  };
+
+  KiteHelper.prototype.getVms = function() {
+    return this._vms.sort((function(_this) {
+      return function(a, b) {
+        return _this.getVMNumber(a) > _this.getVMNumber(b);
+      };
+    })(this));
+  };
+
+  KiteHelper.prototype.getVMNumber = function(_arg) {
+    var hostnameAlias;
+    hostnameAlias = _arg.hostnameAlias;
+    return +(hostnameAlias.match(/\d+/)[0]);
+  };
+
+  KiteHelper.prototype.turnOffVm = function(vm) {
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        return _this.getReady().then(function() {
+          var kite;
+          if (!(kite = _this._kites[vm])) {
+            return reject({
+              message: "No such kite for " + vm
+            });
+          }
+          return kite.vmOff().then(function() {
+            return _this.whenVmState(vm, "STOPPED").then(function() {
+              return resolve();
+            })["catch"](reject);
+          })["catch"](reject);
+        })["catch"](reject);
+      };
+    })(this));
+  };
+
+  KiteHelper.prototype.whenVmState = function(vm, state) {
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        var repeat, timeout, vmController, wait;
+        vmController = KD.singletons.vmController;
+        timeout = 10 * 60 * 1000;
+        repeat = KD.utils.repeat(1000, function() {
+          return vmController.info(vm, function(err, vmn, info) {
+            if ((info != null ? info.state : void 0) === state) {
+              KD.utils.killRepeat(repeat);
+              KD.utils.killWait(wait);
+              return resolve();
+            }
+          });
+        });
+        return wait = KD.utils.wait(timeout, function() {
+          if (repeat != null) {
+            KD.utils.killRepeat(repeat);
+            return reject();
+          }
+        });
+      };
+    })(this));
+  };
+
+  KiteHelper.prototype.getKite = function() {
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        return _this.getReady().then(function() {
+          var kite, vm, vmController;
+          vm = _this.getVm();
+          vmController = KD.singletons.vmController;
+          if (!(kite = _this._kites[vm])) {
+            return reject({
+              message: "No such kite for " + vm
+            });
+          }
+          return vmController.info(vm, function(err, vmn, info) {
+            var timeout;
+            if (err) {
+              return reject(err);
+            }
+            if (!_this.vmIsStarting && info.state === "STOPPED") {
+              _this.vmIsStarting = true;
+              timeout = 10 * 60 * 1000;
+              kite.options.timeout = timeout;
+              return kite.vmOn().then(function() {
+                return _this.whenVmState(vm, "RUNNING").then(function() {
+                  _this.vmIsStarting = false;
+                  return resolve(kite);
+                })["catch"](function(err) {
+                  _this.vmIsStarting = false;
+                  return reject(err);
+                });
+              }).timeout(timeout)["catch"](function(err) {
+                _this.vmIsStarting = false;
+                return reject(err);
+              });
+            } else {
+              return resolve(kite);
+            }
+          });
+        });
+      };
+    })(this));
+  };
+
+  KiteHelper.prototype.run = function(options, callback) {
+    return this.getKite().then(function(kite) {
+      if (options.timeout == null) {
+        options.timeout = 10 * 60 * 1000;
+      }
+      kite.options.timeout = options.timeout;
+      return kite.exec(options).then(function(result) {
+        if (callback) {
+          return callback(null, result);
+        }
+      })["catch"](function(err) {
+        if (callback) {
+          callback({
+            message: "Failed to run " + options.command,
+            details: err
+          });
+        }
+        return console.error(err);
+      });
+    })["catch"](function(err) {
+      if (callback) {
+        callback({
+          message: "Failed to run " + options.command,
+          details: err
+        });
+      }
+      return console.error(err);
+    });
+  };
+
+  return KiteHelper;
+
+})(KDController);
 /* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/utils.coffee */
 var bubbleSort, flatten;
 
@@ -1259,6 +1466,228 @@ bubbleSort = function(array) {
   }
   return modified;
 };
+/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/vmselector.coffee */
+var VMSelectorView,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+VMSelectorView = (function(_super) {
+  __extends(VMSelectorView, _super);
+
+  function VMSelectorView(options, data) {
+    if (options == null) {
+      options = {};
+    }
+    this.kiteHelper = options.kiteHelper;
+    options.callback || (options.callback = void 0);
+    VMSelectorView.__super__.constructor.call(this, options, data);
+  }
+
+  VMSelectorView.prototype.viewAppended = function() {
+    return this.kiteHelper.getReady().then((function(_this) {
+      return function() {
+        _this.addSubView(_this.header = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: 'header',
+          partial: _this.namify(_this.kiteHelper.getVm())
+        }));
+        _this.addSubView(_this.selection = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: 'selection'
+        }));
+        return _this.updateList();
+      };
+    })(this));
+  };
+
+  VMSelectorView.prototype.namify = function(hostname) {
+    return hostname.split(".")[0];
+  };
+
+  VMSelectorView.prototype.updateList = function() {
+    var vmController;
+    this.selection.updatePartial("");
+    vmController = KD.singletons.vmController;
+    return this.kiteHelper.getVms().forEach((function(_this) {
+      return function(vm) {
+        var vmItem;
+        _this.selection.addSubView(vmItem = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: "item",
+          click: function() {
+            if (!_this.hasClass("disabled")) {
+              return _this.chooseVm(vm.hostnameAlias);
+            }
+          }
+        }));
+        if (vm.hostnameAlias === _this.kiteHelper.getVm()) {
+          vmItem.setClass("active");
+        }
+        vmItem.addSubView(new KDCustomHTMLView({
+          tagName: 'span',
+          cssClass: "bubble"
+        }));
+        vmItem.addSubView(new KDCustomHTMLView({
+          tagName: 'span',
+          cssClass: "name",
+          partial: _this.namify(vm.hostnameAlias)
+        }));
+        return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
+          return vmItem.setClass(info != null ? info.state.toLowerCase() : void 0);
+        });
+      };
+    })(this));
+  };
+
+  VMSelectorView.prototype.chooseVm = function(vm) {
+    var callback;
+    callback = this.getOptions().callback;
+    this.kiteHelper.setDefaultVm(vm);
+    callback(vm);
+    this.header.updatePartial(this.namify(vm));
+    return this.updateList();
+  };
+
+  VMSelectorView.prototype.turnOffVm = function(vm) {
+    return this.kiteHelper.turnOffVm(vm).then((function(_this) {
+      return function() {
+        return KD.utils.wait(10000, function() {
+          _this.installer.init();
+          return _this.updateList();
+        });
+      };
+    })(this))["catch"]((function(_this) {
+      return function(err) {};
+    })(this));
+  };
+
+  VMSelectorView.prototype.turnOffVmModal = function() {
+    var container, vmController;
+    if (!this.modal) {
+      vmController = KD.singletons.vmController;
+      this.addSubView(container = new KDCustomHTMLView({
+        tagName: 'div'
+      }));
+      this.kiteHelper.getVms().forEach((function(_this) {
+        return function(vm) {
+          var vmItem;
+          container.addSubView(vmItem = new KDCustomHTMLView({
+            tagName: 'div',
+            cssClass: "item",
+            partial: "<div class=\"bubble\"></div>\n" + vm.hostnameAlias,
+            click: function(event) {
+              _this.turnOffVm(vm.hostnameAlias);
+              return _this.removeModal();
+            }
+          }));
+          return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
+            if ((info != null ? info.state : void 0) !== "RUNNING") {
+              return vmItem.destroy();
+            }
+          });
+        };
+      })(this));
+      return this.modal = new KDModalView({
+        title: "Choose VM To Turn Off",
+        overlay: true,
+        overlayClick: false,
+        width: 400,
+        height: "auto",
+        cssClass: "new-kdmodal",
+        view: container,
+        cancel: (function(_this) {
+          return function() {
+            return _this.removeModal();
+          };
+        })(this)
+      });
+    }
+  };
+
+  VMSelectorView.prototype.removeModal = function() {
+    this.modal.destroy();
+    return delete this.modal;
+  };
+
+  VMSelectorView.prototype.disabled = function(disabled) {
+    if (disabled) {
+      return this.setClass("disabled");
+    } else {
+      return this.unsetClass("disabled");
+    }
+  };
+
+  return VMSelectorView;
+
+})(KDView);
+/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/modal/clonemodal.coffee */
+var GitdashboardCloneModal,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+GitdashboardCloneModal = (function(_super) {
+  __extends(GitdashboardCloneModal, _super);
+
+  function GitdashboardCloneModal(options, data) {
+    if (options == null) {
+      options = {};
+    }
+    this.beginClone = __bind(this.beginClone, this);
+    this.switchVM = __bind(this.switchVM, this);
+    options.cssClass = "clone-modal";
+    this.repoView = options.repoView;
+    this.kiteHelper = new KiteHelper;
+    console.log(this.kiteHelper);
+    this.finderController = new NFinderController({
+      hideDotFiles: true,
+      nodeIdPath: "path",
+      nodeParentIdPath: "parentPath",
+      foldersOnly: true,
+      contextMenu: false,
+      loadFilesOnInit: true
+    });
+    this.finderController.isNodesHiddenFor = function() {
+      return true;
+    };
+    GitdashboardCloneModal.__super__.constructor.call(this, options, data);
+  }
+
+  GitdashboardCloneModal.prototype.viewAppended = function() {
+    console.log(this.kiteHelper);
+    this.addSubView(new VMSelectorView({
+      callback: this.switchVM,
+      kiteHelper: this.kiteHelper
+    }));
+    this.addSubView(this.nameInput = new KDInputView({
+      placeholder: "Name"
+    }));
+    this.addSubView(this.finderController.getView());
+    this.addSubView(new KDButtonView({
+      title: "Clone to my VM",
+      cssClass: "cupid-green",
+      callback: this.beginClone
+    }));
+    return this.addSubView(new KDButtonView({
+      title: "Cancel",
+      callback: this.cancel
+    }));
+  };
+
+  GitdashboardCloneModal.prototype.switchVM = function(vm) {
+    console.log(vm);
+    this.finderController.unmountVm(this.kiteHelper.getVmByName(this.currentVm));
+    this.finderController.mountVm(this.kiteHelper.getVmByName(vm));
+    return this.currentVm = vm;
+  };
+
+  GitdashboardCloneModal.prototype.beginClone = function() {
+    return console.log(this.finderController.treeController.selectedNodes[0]);
+  };
+
+  return GitdashboardCloneModal;
+
+})(KDModalView);
 /* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/repoview.coffee */
 var RepoView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
@@ -1329,7 +1758,9 @@ RepoView = (function(_super) {
   };
 
   RepoView.prototype.cloneToMachine = function(vm, path) {
-    return console.log("Cloned");
+    return new GitdashboardCloneModal({
+      repoView: this
+    });
   };
 
   RepoView.prototype.click = function(event) {
@@ -1386,30 +1817,25 @@ BoxedListView = (function(_super) {
 })(KDView);
 /* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
 var RepoDataController,
-  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 RepoDataController = (function(_super) {
   __extends(RepoDataController, _super);
 
-  function RepoDataController() {
-    this.getTrendingRepos = __bind(this.getTrendingRepos, this);
-    return RepoDataController.__super__.constructor.apply(this, arguments);
-  }
-
-  RepoDataController.prototype.contructor = function(options, data) {
+  function RepoDataController(options, data) {
     var trendingPageController;
     if (options == null) {
       options = {};
     }
+    this.appStorage = KD.getSingleton('appStorageController').storage('Terminal', '1.0.1');
     trendingPageController = KD.singletons.trendingPageController;
     if (trendingPageController) {
       return trendingPageController;
     }
-    RepoDataController.__super__.contructor.call(this, options, data);
-    return this.registerSingleton("trendingPageController", this, true);
-  };
+    RepoDataController.__super__.constructor.call(this, options, data);
+    this.registerSingleton("trendingPageController", this, true);
+  }
 
   RepoDataController.prototype.getTrendingRepos = function(callback) {
     return Promise.all(searchKeywords.map((function(_this) {
@@ -1429,23 +1855,20 @@ RepoDataController = (function(_super) {
       };
     })(this))).then((function(_this) {
       return function(results) {
-        var repo, repos, _i, _len, _results;
-        repos = flatten(results);
-        repos = bubbleSort(repos);
-        console.log(repos);
-        if (repos.length > reposInTrending) {
-          repos = repos.slice(0, reposInTrending);
-        }
-        _results = [];
-        for (_i = 0, _len = repos.length; _i < _len; _i++) {
-          repo = repos[_i];
-          _results.push(callback(repo));
-        }
-        return _results;
+        _this.formatResults(results);
+        console.log(_this, _this.appStorage);
+        return _this.appStorage.fetchStorage(function() {
+          return _this.appStorage.setValue('results', results);
+        });
       };
-    })(this))["catch"](function(err) {
-      return console.log(err);
-    });
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        console.log(_this, _this.appStorage);
+        return _this.appStorage.fetchStorage(function() {
+          return console.log(_this.appStorage.getValue("results"));
+        });
+      };
+    })(this));
   };
 
   RepoDataController.prototype.getMyRepos = function(callback, authToken) {
@@ -1475,6 +1898,21 @@ RepoDataController = (function(_super) {
       language: json.language,
       url: json.html_url
     });
+  };
+
+  RepoDataController.prototype.formatResults = function(results) {
+    var repo, repos, _i, _len, _results;
+    repos = flatten(results);
+    repos = bubbleSort(repos);
+    if (repos.length > reposInTrending) {
+      repos = repos.slice(0, reposInTrending);
+    }
+    _results = [];
+    for (_i = 0, _len = repos.length; _i < _len; _i++) {
+      repo = repos[_i];
+      _results.push(callback(repo));
+    }
+    return _results;
   };
 
   return RepoDataController;

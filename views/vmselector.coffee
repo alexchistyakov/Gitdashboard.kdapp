@@ -45,7 +45,7 @@ class VMSelectorView extends KDView
         vmItem.setClass info?.state.toLowerCase()
 
   chooseVm: (vm)->
-    {callback} = @getOptions
+    {callback} = @getOptions()
     @kiteHelper.setDefaultVm vm
     callback(vm)
     @header.updatePartial @namify vm

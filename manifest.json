@@ -16,6 +16,7 @@
         "files": [
           "./oauth.js",
           "./config.coffee",
+          "./utils/kiteHelper.coffee",
           "./utils/utils.coffee",
           "./views/vmselector.coffee",
           "./modal/clonemodal.coffee",
