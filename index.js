@@ -1,10 +1,10 @@
-/* Compiled by kdc on Tue Aug 19 2014 20:37:38 GMT+0000 (UTC) */
+/* Compiled by kdc on Tue Aug 19 2014 21:14:41 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
   var appView = window.appPreview
 }
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/oauth.js */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/oauth.js */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = {
   oauthd_url: "https://oauth.io",
@@ -1221,7 +1221,7 @@ module.exports = function(document) {
   };
 };
 
-},{}]},{},[4])/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
+},{}]},{},[4])/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/config.coffee */
 var maxSymbolsInDescription, oauthKey, reposInTrending, reposPerTopic, searchKeywords;
 
 searchKeywords = ["3D Modeling", "Data Visualization", "Game Engines", "Software Development tools", "Design Essentials", "Package Manager", "CSS Preprocessors"];
@@ -1233,7 +1233,7 @@ reposPerTopic = 10;
 maxSymbolsInDescription = 100;
 
 oauthKey = "D6R6uhEmh7kmXCVT9YzSwvHP-tk";
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
 var KiteHelper,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1440,7 +1440,7 @@ KiteHelper = (function(_super) {
   return KiteHelper;
 
 })(KDController);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/utils.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/utils/utils.coffee */
 var bubbleSort, flatten;
 
 flatten = function(matrix) {
@@ -1468,7 +1468,7 @@ bubbleSort = function(array) {
   }
   return modified;
 };
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/vmselector.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/views/vmselector.coffee */
 var VMSelectorView,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1490,11 +1490,6 @@ VMSelectorView = (function(_super) {
     return this.kiteHelper.getReady().then((function(_this) {
       return function() {
         console.log("Ready");
-        _this.addSubView(_this.header = new KDCustomHTMLView({
-          tagName: 'div',
-          cssClass: 'header',
-          partial: _this.namify(_this.kiteHelper.getVm())
-        }));
         _this.addSubView(_this.selection = new KDCustomHTMLView({
           tagName: 'div',
           cssClass: 'selection'
@@ -1630,7 +1625,7 @@ VMSelectorView = (function(_super) {
   return VMSelectorView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/modal/clonemodal.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/modal/clonemodal.coffee */
 var GitdashboardCloneModal,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1709,7 +1704,7 @@ GitdashboardCloneModal = (function(_super) {
   return GitdashboardCloneModal;
 
 })(KDModalView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/repoview.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/views/repoview.coffee */
 var RepoView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1784,7 +1779,7 @@ RepoView = (function(_super) {
     });
   };
 
-  RepoView.prototype.click = function(event) {
+  RepoView.prototype.sclick = function(event) {
     var url;
     url = this.getOptions().url;
     return window.open(url, "_blank");
@@ -1793,7 +1788,7 @@ RepoView = (function(_super) {
   return RepoView;
 
 })(KDListItemView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/boxedlistview.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/views/boxedlistview.coffee */
 var BoxedListView,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1836,7 +1831,7 @@ BoxedListView = (function(_super) {
   return BoxedListView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
 var RepoDataController,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1939,7 +1934,7 @@ RepoDataController = (function(_super) {
   return RepoDataController;
 
 })(KDController);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/trendingpageview.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/views/trendingpageview.coffee */
 var GitDashboardTrendingPageView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1972,7 +1967,7 @@ GitDashboardTrendingPageView = (function(_super) {
   return GitDashboardTrendingPageView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/myrepospageview.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/views/myrepospageview.coffee */
 var GitDashboardMyReposPageView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -2009,7 +2004,7 @@ GitDashboardMyReposPageView = (function(_super) {
   return GitDashboardMyReposPageView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/mainview.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/views/mainview.coffee */
 var GitDashboardMainView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -2054,13 +2049,13 @@ GitDashboardMainView = (function(_super) {
   };
 
   GitDashboardMainView.prototype.oauthAuthentication = function() {
-    var callback, options;
-    callback = this.initPersonal;
-    return OAuth.popup("github", options = {
+    return OAuth.popup("github", {
       cache: true
-    }).done(function(result) {
-      return callback();
-    }).fail(function(err) {
+    }).done((function(_this) {
+      return function(result) {
+        return _this.initPersonal();
+      };
+    })(this)).fail(function(err) {
       return console.log(err);
     });
   };
@@ -2078,7 +2073,7 @@ GitDashboardMainView = (function(_super) {
   return GitDashboardMainView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/index.coffee */
+/* BLOCK STARTS: /home/bvallelunga/Applications/Gitdashboard.kdapp/index.coffee */
 var GitDashboardController,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };

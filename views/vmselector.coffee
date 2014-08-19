@@ -3,15 +3,11 @@ class VMSelectorView extends KDView
       @kiteHelper = options.kiteHelper
       options.callback or= undefined
       super options,data
+
   viewAppended: ->
     console.log "Appended"
     @kiteHelper.getReady().then =>
       console.log "Ready"
-      @addSubView @header = new KDCustomHTMLView
-        tagName       : 'div'
-        cssClass      : 'header'
-        partial       : @namify(@kiteHelper.getVm())
-
       @addSubView @selection = new KDCustomHTMLView
         tagName       : 'div'
         cssClass      : 'selection'
@@ -46,8 +42,9 @@ class VMSelectorView extends KDView
       console.log "Active checked 2"
       vmController.info vm.hostnameAlias, (err, vmn, info)=>
         vmItem.setClass info?.state.toLowerCase()
-        
+
       console.log "VM is loaded"
+
   chooseVm: (vm)->
     {callback} = @getOptions()
     @kiteHelper.setDefaultVm vm
@@ -56,14 +53,13 @@ class VMSelectorView extends KDView
     @updateList()
 
   turnOffVm: (vm)->
-
     @kiteHelper.turnOffVm(vm).then =>
       # Wait for Koding to register other vm is off
       KD.utils.wait 10000, =>
         @installer.init()
         @updateList()
     .catch (err)=>
-      
+
 
   turnOffVmModal: ->
       unless @modal
