@@ -2,3 +2,5 @@ searchKeywords = ["3D Modeling","Data Visualization","Game Engines","Software De
 reposInTrending = 50
 reposPerTopic = 10
 maxSymbolsInDescription = 100
+
+oauthKey = "D6R6uhEmh7kmXCVT9YzSwvHP-tk"

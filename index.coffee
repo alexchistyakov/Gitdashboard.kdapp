@@ -10,8 +10,7 @@ class GitDashboardController extends AppController
     super options, data
 
 do ->
-  OAuth.initialize "D6R6uhEmh7kmXCVT9YzSwvHP-tk"  
-  # In live mode you can add your App view to window's appView
+  OAuth.initialize oauthKey
   if appView?
     view = new GitDashboardMainView
     appView.addSubView view

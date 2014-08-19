@@ -5,6 +5,9 @@ class GitdashboardCloneModal extends KDModalView
     
     @kiteHelper = new KiteHelper
     console.log @kiteHelper
+    @vmSelector = new VMSelectorView
+        callback: @switchVM
+        kiteHelper: @kiteHelper
     @finderController = new NFinderController
         hideDotFiles:true
         nodeIdPath: "path"
@@ -13,12 +16,11 @@ class GitdashboardCloneModal extends KDModalView
         contextMenu: false
         loadFilesOnInit: true
     @finderController.isNodesHiddenFor = -> true
+    @finderController.unmountVm vm.hostnameAlias for vm in @finderController.vms
     super options, data
   viewAppended:->
     console.log @kiteHelper
-    @addSubView new VMSelectorView
-        callback: @switchVM
-        kiteHelper: @kiteHelper
+    @addSubView @vmSelector
     @addSubView @nameInput = new KDInputView
         placeholder: "Name"
     @addSubView @finderController.getView()
@@ -31,7 +33,7 @@ class GitdashboardCloneModal extends KDModalView
         callback: @cancel
   switchVM: (vm) =>
     console.log vm
-    @finderController.unmountVm @kiteHelper.getVmByName @currentVm
+    @finderController.unmountVm @currentVm if @currentVm?
     @finderController.mountVm @kiteHelper.getVmByName vm
     @currentVm = vm
   beginClone: =>

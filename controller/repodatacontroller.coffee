@@ -1,6 +1,6 @@
 class RepoDataController extends KDController
     constructor:(options={},data) ->
-        @appStorage = KD.getSingleton('appStorageController').storage('Terminal', '1.0.1')
+        @appStorage = KD.getSingleton('appStorageController').storage('Gitdashboard', '0.1')
         { trendingPageController } = KD.singletons
         return trendingPageController if trendingPageController
     
@@ -9,20 +9,32 @@ class RepoDataController extends KDController
         @registerSingleton "trendingPageController", this, yes
         
     getTrendingRepos:(callback)->
-        Promise.all(searchKeywords.map (topic) =>
-            link = encodeURI("https://api.github.com/search/repositories?q=#{topic}&sort=stars&order=desc")
-            return $.getJSON(link).then (json) =>
-                for i in [0...reposPerTopic] when json.items[i]?
-                    @repoViewFromJson(json.items[i])
-        ).then (results) =>
-            @formatResults(results)
-            console.log @, @appStorage
-            @appStorage.fetchStorage =>
-                @appStorage.setValue 'results' , results
-        .catch (err) =>
-            console.log @, @appStorage
-            @appStorage.fetchStorage =>
-                console.log @appStorage.getValue "results"
+            Promise.all(searchKeywords.map (topic) =>
+                link = encodeURI("https://api.github.com/search/repositories?q=#{topic}&sort=stars&order=desc")
+                return $.getJSON(link).then (json) =>
+                    for i in [0...reposPerTopic] when json.items[i]?
+                        {
+                            name: json.items[i].name
+                            user: json.items[i].owner.login
+                            authorGravatarUrl: json.items[i].owner.avatar_url
+                            cloneUrl: json.items[i].clone_url
+                            description: json.items[i].description
+                            stars: json.items[i].stargazers_count
+                            language: json.items[i].language
+                            url: json.items[i].html_url
+                        }
+            ).then (results) =>
+                repos = @formatResults(results)
+                console.log repos
+                for repoO in repos
+                    callback(new RepoView repoO)
+                @appStorage.setValue "repos" , repos
+            .catch (err) =>
+                console.log "Throttle load"
+                console.log "Block"
+                options = @appStorage.getValue("repos")
+                for option in options
+                    callback(new RepoView option)
     getMyRepos:(callback,authToken)->
         repoViewFromJson = @repoViewFromJson
         authToken.get("/user/repos")
@@ -31,20 +43,10 @@ class RepoDataController extends KDController
                 callback(repoViewFromJson(repo))
         .fail (err) ->
             console.log err
-    repoViewFromJson: (json) ->
-        new RepoView
-            name: json.name
-            user: json.owner.login
-            authorGravatarUrl: json.owner.avatar_url
-            cloneUrl: json.clone_url
-            description: json.description
-            stars: json.stargazers_count
-            language: json.language
-            url: json.html_url
     formatResults: (results) ->
         repos = flatten(results)
         repos = bubbleSort(repos)
         if repos.length > reposInTrending 
             repos = repos[0...reposInTrending]
-        for repo in repos
-            callback(repo)
+        return repos
+        

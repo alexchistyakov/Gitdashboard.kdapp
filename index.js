@@ -1,4 +1,4 @@
-/* Compiled by kdc on Tue Aug 19 2014 00:43:39 GMT+0000 (UTC) */
+/* Compiled by kdc on Tue Aug 19 2014 19:35:13 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1222,7 +1222,7 @@ module.exports = function(document) {
 };
 
 },{}]},{},[4])/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
-var maxSymbolsInDescription, reposInTrending, reposPerTopic, searchKeywords;
+var maxSymbolsInDescription, oauthKey, reposInTrending, reposPerTopic, searchKeywords;
 
 searchKeywords = ["3D Modeling", "Data Visualization", "Game Engines", "Software Development tools", "Design Essentials", "Package Manager", "CSS Preprocessors"];
 
@@ -1231,6 +1231,8 @@ reposInTrending = 50;
 reposPerTopic = 10;
 
 maxSymbolsInDescription = 100;
+
+oauthKey = "D6R6uhEmh7kmXCVT9YzSwvHP-tk";
 /* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
 var KiteHelper,
   __hasProp = {}.hasOwnProperty,
@@ -1459,7 +1461,7 @@ bubbleSort = function(array) {
   modified = array.slice();
   for (i = _i = 0, _ref = modified.length - 1; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
     for (j = _j = 0, _ref1 = modified.length - 1 - i; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
-      if (modified[j].options.stars < modified[j + 1].options.stars) {
+      if (modified[j].stars < modified[j + 1].stars) {
         _ref2 = [modified[j + 1], modified[j]], modified[j] = _ref2[0], modified[j + 1] = _ref2[1];
       }
     }
@@ -1630,6 +1632,7 @@ GitdashboardCloneModal = (function(_super) {
   __extends(GitdashboardCloneModal, _super);
 
   function GitdashboardCloneModal(options, data) {
+    var vm, _i, _len, _ref;
     if (options == null) {
       options = {};
     }
@@ -1639,6 +1642,10 @@ GitdashboardCloneModal = (function(_super) {
     this.repoView = options.repoView;
     this.kiteHelper = new KiteHelper;
     console.log(this.kiteHelper);
+    this.vmSelector = new VMSelectorView({
+      callback: this.switchVM,
+      kiteHelper: this.kiteHelper
+    });
     this.finderController = new NFinderController({
       hideDotFiles: true,
       nodeIdPath: "path",
@@ -1650,15 +1657,17 @@ GitdashboardCloneModal = (function(_super) {
     this.finderController.isNodesHiddenFor = function() {
       return true;
     };
+    _ref = this.finderController.vms;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      vm = _ref[_i];
+      this.finderController.unmountVm(vm.hostnameAlias);
+    }
     GitdashboardCloneModal.__super__.constructor.call(this, options, data);
   }
 
   GitdashboardCloneModal.prototype.viewAppended = function() {
     console.log(this.kiteHelper);
-    this.addSubView(new VMSelectorView({
-      callback: this.switchVM,
-      kiteHelper: this.kiteHelper
-    }));
+    this.addSubView(this.vmSelector);
     this.addSubView(this.nameInput = new KDInputView({
       placeholder: "Name"
     }));
@@ -1676,7 +1685,9 @@ GitdashboardCloneModal = (function(_super) {
 
   GitdashboardCloneModal.prototype.switchVM = function(vm) {
     console.log(vm);
-    this.finderController.unmountVm(this.kiteHelper.getVmByName(this.currentVm));
+    if (this.currentVm != null) {
+      this.finderController.unmountVm(this.currentVm);
+    }
     this.finderController.mountVm(this.kiteHelper.getVmByName(vm));
     return this.currentVm = vm;
   };
@@ -1828,7 +1839,7 @@ RepoDataController = (function(_super) {
     if (options == null) {
       options = {};
     }
-    this.appStorage = KD.getSingleton('appStorageController').storage('Terminal', '1.0.1');
+    this.appStorage = KD.getSingleton('appStorageController').storage('Gitdashboard', '0.1');
     trendingPageController = KD.singletons.trendingPageController;
     if (trendingPageController) {
       return trendingPageController;
@@ -1847,7 +1858,16 @@ RepoDataController = (function(_super) {
           _results = [];
           for (i = _i = 0; 0 <= reposPerTopic ? _i < reposPerTopic : _i > reposPerTopic; i = 0 <= reposPerTopic ? ++_i : --_i) {
             if (json.items[i] != null) {
-              _results.push(_this.repoViewFromJson(json.items[i]));
+              _results.push({
+                name: json.items[i].name,
+                user: json.items[i].owner.login,
+                authorGravatarUrl: json.items[i].owner.avatar_url,
+                cloneUrl: json.items[i].clone_url,
+                description: json.items[i].description,
+                stars: json.items[i].stargazers_count,
+                language: json.items[i].language,
+                url: json.items[i].html_url
+              });
             }
           }
           return _results;
@@ -1855,18 +1875,27 @@ RepoDataController = (function(_super) {
       };
     })(this))).then((function(_this) {
       return function(results) {
-        _this.formatResults(results);
-        console.log(_this, _this.appStorage);
-        return _this.appStorage.fetchStorage(function() {
-          return _this.appStorage.setValue('results', results);
-        });
+        var repoO, repos, _i, _len;
+        repos = _this.formatResults(results);
+        console.log(repos);
+        for (_i = 0, _len = repos.length; _i < _len; _i++) {
+          repoO = repos[_i];
+          callback(new RepoView(repoO));
+        }
+        return _this.appStorage.setValue("repos", repos);
       };
     })(this))["catch"]((function(_this) {
       return function(err) {
-        console.log(_this, _this.appStorage);
-        return _this.appStorage.fetchStorage(function() {
-          return console.log(_this.appStorage.getValue("results"));
-        });
+        var option, options, _i, _len, _results;
+        console.log("Throttle load");
+        console.log("Block");
+        options = _this.appStorage.getValue("repos");
+        _results = [];
+        for (_i = 0, _len = options.length; _i < _len; _i++) {
+          option = options[_i];
+          _results.push(callback(new RepoView(option)));
+        }
+        return _results;
       };
     })(this));
   };
@@ -1887,32 +1916,14 @@ RepoDataController = (function(_super) {
     });
   };
 
-  RepoDataController.prototype.repoViewFromJson = function(json) {
-    return new RepoView({
-      name: json.name,
-      user: json.owner.login,
-      authorGravatarUrl: json.owner.avatar_url,
-      cloneUrl: json.clone_url,
-      description: json.description,
-      stars: json.stargazers_count,
-      language: json.language,
-      url: json.html_url
-    });
-  };
-
   RepoDataController.prototype.formatResults = function(results) {
-    var repo, repos, _i, _len, _results;
+    var repos;
     repos = flatten(results);
     repos = bubbleSort(repos);
     if (repos.length > reposInTrending) {
       repos = repos.slice(0, reposInTrending);
     }
-    _results = [];
-    for (_i = 0, _len = repos.length; _i < _len; _i++) {
-      repo = repos[_i];
-      _results.push(callback(repo));
-    }
-    return _results;
+    return repos;
   };
 
   return RepoDataController;
@@ -2083,7 +2094,7 @@ GitDashboardController = (function(_super) {
 
 (function() {
   var view;
-  OAuth.initialize("D6R6uhEmh7kmXCVT9YzSwvHP-tk");
+  OAuth.initialize(oauthKey);
   if (typeof appView !== "undefined" && appView !== null) {
     view = new GitDashboardMainView;
     return appView.addSubView(view);
