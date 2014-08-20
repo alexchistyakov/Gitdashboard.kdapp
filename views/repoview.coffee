@@ -9,6 +9,7 @@ class RepoView extends KDListItemView
         options.language    or= "Language"
         options.cssClass      = KD.utils.curry "repoview-container", options.cssClass
         options.url         or= ""
+        @kiteHelper           = options.kiteHelper
         
         if options.description.length > maxSymbolsInDescription
             options.description = options.description.substring(0,maxSymbolsInDescription)+"..."
@@ -44,9 +45,10 @@ class RepoView extends KDListItemView
             title: "Clone"
             callback: @cloneToMachine
             cssClass: "cupid-green clone-button"
-    cloneToMachine: (vm,path)=>
+    cloneToMachine: ()=>
         new GitdashboardCloneModal
             repoView: this
+            kiteHelper: @kiteHelper
     click:(event) ->
         {url} = @getOptions()
         window.open url,"_blank"

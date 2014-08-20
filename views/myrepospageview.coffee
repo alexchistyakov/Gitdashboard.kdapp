@@ -1,6 +1,6 @@
 class GitDashboardMyReposPageView extends KDView
   constructor:(options = {}, data)->
-    @controller = new RepoDataController
+    @controller = options.dataController
     @authToken = options.authToken
     unless @authToken?
         throw new Error "No authentication token provided"

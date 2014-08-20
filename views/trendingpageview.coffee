@@ -1,7 +1,7 @@
 class GitDashboardTrendingPageView extends KDView
 
   constructor:(options = {}, data)->
-    @controller = new RepoDataController
+    @controller = options.dataController
     options.cssClass = 'Gitdashboard'
     super options, data
 

@@ -1,4 +1,4 @@
-/* Compiled by kdc on Tue Aug 19 2014 20:37:38 GMT+0000 (UTC) */
+/* Compiled by kdc on Wed Aug 20 2014 19:33:23 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1266,7 +1266,7 @@ KiteHelper = (function(_super) {
             console.warn(err);
           }
           if (!vms) {
-            return;
+            return reject(vms);
           }
           _this._vms = vms;
           _this._kites = {};
@@ -1486,22 +1486,33 @@ VMSelectorView = (function(_super) {
   }
 
   VMSelectorView.prototype.viewAppended = function() {
-    console.log("Appended");
-    return this.kiteHelper.getReady().then((function(_this) {
+    console.log(this.kiteHelper.ready);
+    this.addSubView(this.loader = new KDLoaderView({
+      showLoader: true,
+      size: {
+        width: 20
+      }
+    }));
+    this.kiteHelper.ready((function(_this) {
       return function() {
         console.log("Ready");
         _this.addSubView(_this.header = new KDCustomHTMLView({
           tagName: 'div',
           cssClass: 'header',
-          partial: _this.namify(_this.kiteHelper.getVm())
+          partial: _this.namify(_this.kiteHelper.getVm()),
+          click: function() {
+            return _this.selection.toggleClass("hidden");
+          }
         }));
         _this.addSubView(_this.selection = new KDCustomHTMLView({
           tagName: 'div',
-          cssClass: 'selection'
+          cssClass: 'selection hidden'
         }));
-        return _this.updateList();
+        _this.updateList();
+        return _this.loader.setClass("hidden");
       };
     })(this));
+    return this.kiteHelper.getKite();
   };
 
   VMSelectorView.prototype.namify = function(hostname) {
@@ -1555,15 +1566,22 @@ VMSelectorView = (function(_super) {
     this.kiteHelper.setDefaultVm(vm);
     callback(vm);
     this.header.updatePartial(this.namify(vm));
-    return this.updateList();
+    this.updateList();
+    return console.log("Chosen");
   };
 
-  VMSelectorView.prototype.turnOffVm = function(vm) {
+  VMSelectorView.prototype.turnOffVm = function(vm, toMount) {
+    this.header.setClass("hidden");
+    this.selection.setClass("hidden");
+    this.loader.unsetClass("hidden");
     return this.kiteHelper.turnOffVm(vm).then((function(_this) {
       return function() {
         return KD.utils.wait(10000, function() {
-          _this.installer.init();
-          return _this.updateList();
+          _this.chooseVm(toMount);
+          _this.updateList();
+          _this.header.unsetClass("hidden");
+          _this.selection.unsetClass("hidden");
+          return _this.loader.setClass("hidden");
         });
       };
     })(this))["catch"]((function(_this) {
@@ -1571,7 +1589,7 @@ VMSelectorView = (function(_super) {
     })(this));
   };
 
-  VMSelectorView.prototype.turnOffVmModal = function() {
+  VMSelectorView.prototype.turnOffVmModal = function(toMount) {
     var container, vmController;
     if (!this.modal) {
       vmController = KD.singletons.vmController;
@@ -1586,7 +1604,7 @@ VMSelectorView = (function(_super) {
             cssClass: "item",
             partial: "<div class=\"bubble\"></div>\n" + vm.hostnameAlias,
             click: function(event) {
-              _this.turnOffVm(vm.hostnameAlias);
+              _this.turnOffVm(vm.hostnameAlias, toMount);
               return _this.removeModal();
             }
           }));
@@ -1640,20 +1658,15 @@ GitdashboardCloneModal = (function(_super) {
   __extends(GitdashboardCloneModal, _super);
 
   function GitdashboardCloneModal(options, data) {
-    var vm, _i, _len, _ref;
     if (options == null) {
       options = {};
     }
+    this.unmountAll = __bind(this.unmountAll, this);
     this.beginClone = __bind(this.beginClone, this);
-    this.switchVM = __bind(this.switchVM, this);
+    this.viewAppended = __bind(this.viewAppended, this);
     options.cssClass = "clone-modal";
     this.repoView = options.repoView;
-    this.kiteHelper = new KiteHelper;
-    console.log(this.kiteHelper);
-    this.vmSelector = new VMSelectorView({
-      callback: this.switchVM,
-      kiteHelper: this.kiteHelper
-    });
+    this.kiteHelper = options.kiteHelper;
     this.finderController = new NFinderController({
       hideDotFiles: true,
       nodeIdPath: "path",
@@ -1662,48 +1675,51 @@ GitdashboardCloneModal = (function(_super) {
       contextMenu: false,
       loadFilesOnInit: true
     });
-    this.finderController.isNodesHiddenFor = function() {
-      return true;
-    };
-    _ref = this.finderController.vms;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      vm = _ref[_i];
-      this.finderController.unmountVm(vm.hostnameAlias);
-    }
+    this.kiteHelper.getKite().then((function(_this) {
+      return function(kite) {
+        _this.unmountAll();
+        _this.finderController.mountVm(_this.kiteHelper.getVmByName(_this.kiteHelper.getVm()));
+        return _this.finderController.isNodesHiddenFor = function() {
+          return true;
+        };
+      };
+    })(this));
     GitdashboardCloneModal.__super__.constructor.call(this, options, data);
   }
 
   GitdashboardCloneModal.prototype.viewAppended = function() {
-    return this.kiteHelper.getReady().then((function(_this) {
-      return function() {
-        _this.addSubView(_this.vmSelector);
-        _this.addSubView(_this.nameInput = new KDInputView({
-          placeholder: "Name"
-        }));
-        _this.addSubView(_this.finderController.getView());
-        _this.addSubView(new KDButtonView({
-          title: "Clone to my VM",
-          cssClass: "cupid-green",
-          callback: _this.beginClone
-        }));
-        return _this.addSubView(new KDButtonView({
-          title: "Cancel",
-          callback: _this.cancel
-        }));
-      };
-    })(this));
-  };
-
-  GitdashboardCloneModal.prototype.switchVM = function(vm) {
-    if (this.currentVm != null) {
-      this.finderController.unmountVm(this.currentVm);
-    }
-    this.finderController.mountVm(this.kiteHelper.getVmByName(vm));
-    return this.currentVm = vm;
+    console.log(this.kiteHelper);
+    this.addSubView(this.vmSelector);
+    this.addSubView(this.nameInput = new KDInputView({
+      placeholder: "Name"
+    }));
+    this.unmountAll();
+    this.addSubView(this.finderController.getView());
+    this.addSubView(new KDButtonView({
+      title: "Clone to my VM",
+      cssClass: "cupid-green",
+      callback: this.beginClone
+    }));
+    return this.addSubView(new KDButtonView({
+      title: "Cancel",
+      callback: this.cancel
+    }));
   };
 
   GitdashboardCloneModal.prototype.beginClone = function() {
-    return console.log(this.finderController.treeController.selectedNodes[0]);
+    var fullPath;
+    return fullPath = this.finderController.treeController.selectedNodes[0].data.path + "" + this.nameInput.getValue;
+  };
+
+  GitdashboardCloneModal.prototype.unmountAll = function() {
+    var vmR, _i, _len, _ref, _results;
+    _ref = this.finderController.vms;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      vmR = _ref[_i];
+      _results.push(this.finderController.unmountVm(vmR.vmName));
+    }
+    return _results;
   };
 
   return GitdashboardCloneModal;
@@ -1732,6 +1748,7 @@ RepoView = (function(_super) {
     options.language || (options.language = "Language");
     options.cssClass = KD.utils.curry("repoview-container", options.cssClass);
     options.url || (options.url = "");
+    this.kiteHelper = options.kiteHelper;
     if (options.description.length > maxSymbolsInDescription) {
       options.description = options.description.substring(0, maxSymbolsInDescription) + "...";
     } else {
@@ -1778,9 +1795,10 @@ RepoView = (function(_super) {
     }));
   };
 
-  RepoView.prototype.cloneToMachine = function(vm, path) {
+  RepoView.prototype.cloneToMachine = function() {
     return new GitdashboardCloneModal({
-      repoView: this
+      repoView: this,
+      kiteHelper: this.kiteHelper
     });
   };
 
@@ -1838,6 +1856,7 @@ BoxedListView = (function(_super) {
 })(KDView);
 /* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
 var RepoDataController,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -1849,12 +1868,14 @@ RepoDataController = (function(_super) {
     if (options == null) {
       options = {};
     }
+    this.getMyRepos = __bind(this.getMyRepos, this);
     this.appStorage = KD.getSingleton('appStorageController').storage('Gitdashboard', '0.1');
     trendingPageController = KD.singletons.trendingPageController;
     if (trendingPageController) {
       return trendingPageController;
     }
     RepoDataController.__super__.constructor.call(this, options, data);
+    this.kiteHelper = options.kiteHelper;
     this.registerSingleton("trendingPageController", this, true);
   }
 
@@ -1868,16 +1889,7 @@ RepoDataController = (function(_super) {
           _results = [];
           for (i = _i = 0; 0 <= reposPerTopic ? _i < reposPerTopic : _i > reposPerTopic; i = 0 <= reposPerTopic ? ++_i : --_i) {
             if (json.items[i] != null) {
-              _results.push({
-                name: json.items[i].name,
-                user: json.items[i].owner.login,
-                authorGravatarUrl: json.items[i].owner.avatar_url,
-                cloneUrl: json.items[i].clone_url,
-                description: json.items[i].description,
-                stars: json.items[i].stargazers_count,
-                language: json.items[i].language,
-                url: json.items[i].html_url
-              });
+              _results.push(_this.generateOptions(json.items[i]));
             }
           }
           return _results;
@@ -1890,6 +1902,7 @@ RepoDataController = (function(_super) {
         console.log(repos);
         for (_i = 0, _len = repos.length; _i < _len; _i++) {
           repoO = repos[_i];
+          repoO["kiteHelper"] = _this.kiteHelper;
           callback(new RepoView(repoO));
         }
         return _this.appStorage.setValue("repos", repos);
@@ -1903,6 +1916,7 @@ RepoDataController = (function(_super) {
         _results = [];
         for (_i = 0, _len = options.length; _i < _len; _i++) {
           option = options[_i];
+          option["kiteHelper"] = _this.kiteHelper;
           _results.push(callback(new RepoView(option)));
         }
         return _results;
@@ -1911,17 +1925,17 @@ RepoDataController = (function(_super) {
   };
 
   RepoDataController.prototype.getMyRepos = function(callback, authToken) {
-    var repoViewFromJson;
-    repoViewFromJson = this.repoViewFromJson;
-    return authToken.get("/user/repos").done(function(response) {
-      var repo, _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = response.length; _i < _len; _i++) {
-        repo = response[_i];
-        _results.push(callback(repoViewFromJson(repo)));
-      }
-      return _results;
-    }).fail(function(err) {
+    return authToken.get("/user/repos").done((function(_this) {
+      return function(response) {
+        var repo, _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = response.length; _i < _len; _i++) {
+          repo = response[_i];
+          _results.push(callback(new RepoView(_this.generateOptions(repo))));
+        }
+        return _results;
+      };
+    })(this)).fail(function(err) {
       return console.log(err);
     });
   };
@@ -1934,6 +1948,19 @@ RepoDataController = (function(_super) {
       repos = repos.slice(0, reposInTrending);
     }
     return repos;
+  };
+
+  RepoDataController.prototype.generateOptions = function(item) {
+    return {
+      name: item.name,
+      user: item.owner.login,
+      authorGravatarUrl: item.owner.avatar_url,
+      cloneUrl: item.clone_url,
+      description: item.description,
+      stars: item.stargazers_count,
+      language: item.language,
+      url: item.html_url
+    };
   };
 
   return RepoDataController;
@@ -1953,7 +1980,7 @@ GitDashboardTrendingPageView = (function(_super) {
       options = {};
     }
     this.repoReceived = __bind(this.repoReceived, this);
-    this.controller = new RepoDataController;
+    this.controller = options.dataController;
     options.cssClass = 'Gitdashboard';
     GitDashboardTrendingPageView.__super__.constructor.call(this, options, data);
   }
@@ -1986,7 +2013,7 @@ GitDashboardMyReposPageView = (function(_super) {
       options = {};
     }
     this.repoReceived = __bind(this.repoReceived, this);
-    this.controller = new RepoDataController;
+    this.controller = options.dataController;
     this.authToken = options.authToken;
     if (this.authToken == null) {
       throw new Error("No authentication token provided");
@@ -2022,10 +2049,15 @@ GitDashboardMainView = (function(_super) {
     if (options == null) {
       options = {};
     }
+    this.switchVm = __bind(this.switchVm, this);
     this.initPersonal = __bind(this.initPersonal, this);
     this.oauthAuthentication = __bind(this.oauthAuthentication, this);
     options.cssClass = 'GitDashboard';
     GitDashboardMainView.__super__.constructor.call(this, options, data);
+    this.kiteHelper = new KiteHelper;
+    this.controller = new RepoDataController({
+      kiteHelper: this.kiteHelper
+    });
   }
 
   GitDashboardMainView.prototype.viewAppended = function() {
@@ -2042,12 +2074,19 @@ GitDashboardMainView = (function(_super) {
     this.tabView.addPane(this.trendingPagePane = new KDTabPaneView({
       title: "Trending"
     }));
-    this.trendingPagePane.setMainView(new GitDashboardTrendingPageView);
+    this.trendingPagePane.setMainView(new GitDashboardTrendingPageView({
+      dataController: this.controller
+    }));
     _ref = this.tabView.handles;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       handle = _ref[_i];
       handle.setClass("handle");
     }
+    this.addSubView(this.vmSelector = new VMSelectorView({
+      callback: this.switchVM,
+      kiteHelper: this.kiteHelper,
+      cssClass: "vm-selector"
+    }));
     if (OAuth.create("github") === !false) {
       return this.initPersonal();
     }
@@ -2070,9 +2109,28 @@ GitDashboardMainView = (function(_super) {
       title: "My Repos"
     }));
     this.myReposPagePane.setMainView(new GitDashboardMyReposPageView({
-      authToken: OAuth.create("github")
+      authToken: OAuth.create("github"),
+      dataController: this.controller
     }));
     return this.loginButton.hide();
+  };
+
+  GitDashboardMainView.prototype.switchVm = function(vm) {
+    this.overlay = new KDOverlayView(this.overlay == null ? {
+      isRemovable: false,
+      color: "#000",
+      container: this
+    } : void 0);
+    return this.kiteHelper.getKite().then((function(_this) {
+      return function(kite) {
+        _this.overlay.remove();
+        return delete _this.overlay;
+      };
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        return _this.vmSelector.tunOffVmModal();
+      };
+    })(this));
   };
 
   return GitDashboardMainView;

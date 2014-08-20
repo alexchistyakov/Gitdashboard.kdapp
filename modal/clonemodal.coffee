@@ -3,11 +3,7 @@ class GitdashboardCloneModal extends KDModalView
     options.cssClass = "clone-modal"
     @repoView = options.repoView
     
-    @kiteHelper = new KiteHelper
-    console.log @kiteHelper
-    @vmSelector = new VMSelectorView
-        callback: @switchVM
-        kiteHelper: @kiteHelper
+    @kiteHelper = options.kiteHelper
     @finderController = new NFinderController
         hideDotFiles:true
         nodeIdPath: "path"
@@ -15,26 +11,32 @@ class GitdashboardCloneModal extends KDModalView
         foldersOnly: true
         contextMenu: false
         loadFilesOnInit: true
-    @finderController.isNodesHiddenFor = -> true
-    @finderController.unmountVm vm.hostnameAlias for vm in @finderController.vms
+        
+    @kiteHelper.getKite().then (kite) =>
+        @unmountAll()
+        @finderController.mountVm @kiteHelper.getVmByName @kiteHelper.getVm()
+        @finderController.isNodesHiddenFor = -> true
     super options, data
-  viewAppended:->
-    @kiteHelper.getReady().then =>
-        @addSubView @vmSelector
-        @addSubView @nameInput = new KDInputView
-            placeholder: "Name"
-        @addSubView @finderController.getView()
-        @addSubView new KDButtonView 
-            title: "Clone to my VM"
-            cssClass: "cupid-green"
-            callback: @beginClone
-        @addSubView new KDButtonView
-            title: "Cancel"
-            callback: @cancel
-  switchVM: (vm) =>
-    @finderController.unmountVm @currentVm if @currentVm?
-    @finderController.mountVm @kiteHelper.getVmByName vm
-    @currentVm = vm
+    
+  viewAppended:=>
+    console.log @kiteHelper
+    @addSubView @vmSelector
+    
+    @addSubView @nameInput = new KDInputView
+        placeholder: "Name"
+    @unmountAll()
+    @addSubView @finderController.getView()
+    @addSubView new KDButtonView 
+        title: "Clone to my VM"
+        cssClass: "cupid-green"
+        callback: @beginClone
+        
+    @addSubView new KDButtonView
+        title: "Cancel"
+        callback: @cancel
+        
   beginClone: =>
-    console.log @finderController.treeController.selectedNodes[0]
+    fullPath = @finderController.treeController.selectedNodes[0].data.path+""+@nameInput.getValue
+  unmountAll: =>
+    @finderController.unmountVm vmR.vmName for vmR in @finderController.vms
   

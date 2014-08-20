@@ -13,7 +13,7 @@ class KiteHelper extends KDController
       {JVM} = KD.remote.api
       JVM.fetchVmsByContext (err, vms)=>
         console.warn err  if err
-        return unless vms
+        return reject vms unless vms
 
         @_vms = vms
         @_kites = {}

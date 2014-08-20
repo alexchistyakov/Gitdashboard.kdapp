@@ -4,20 +4,26 @@ class VMSelectorView extends KDView
       options.callback or= undefined
       super options,data
   viewAppended: ->
-    console.log "Appended"
-    @kiteHelper.getReady().then =>
+    console.log @kiteHelper.ready
+    @addSubView @loader = new KDLoaderView
+        showLoader    : yes
+        size          :
+          width       : 20
+    @kiteHelper.ready =>
       console.log "Ready"
       @addSubView @header = new KDCustomHTMLView
         tagName       : 'div'
         cssClass      : 'header'
         partial       : @namify(@kiteHelper.getVm())
-
+        click         : => @selection.toggleClass "hidden"
+        
       @addSubView @selection = new KDCustomHTMLView
         tagName       : 'div'
-        cssClass      : 'selection'
-
+        cssClass      : 'selection hidden'
       @updateList()
+      @loader.setClass "hidden"
 
+    @kiteHelper.getKite()
   namify: (hostname)->
     return hostname.split(".")[0]
 
@@ -54,18 +60,24 @@ class VMSelectorView extends KDView
     callback(vm)
     @header.updatePartial @namify vm
     @updateList()
-
-  turnOffVm: (vm)->
-
+    console.log "Chosen"
+    
+  turnOffVm: (vm, toMount)->
+    @header.setClass "hidden"
+    @selection.setClass "hidden"
+    @loader.unsetClass "hidden"
     @kiteHelper.turnOffVm(vm).then =>
       # Wait for Koding to register other vm is off
       KD.utils.wait 10000, =>
-        @installer.init()
+        @chooseVm(toMount)
         @updateList()
+        @header.unsetClass "hidden"
+        @selection.unsetClass "hidden"
+        @loader.setClass "hidden"
     .catch (err)=>
       
 
-  turnOffVmModal: ->
+  turnOffVmModal:(toMount) ->
       unless @modal
         {vmController} = KD.singletons
         @addSubView container = new KDCustomHTMLView
@@ -80,7 +92,7 @@ class VMSelectorView extends KDView
               #{vm.hostnameAlias}
             """
             click         : (event)=>
-              @turnOffVm vm.hostnameAlias
+              @turnOffVm vm.hostnameAlias,toMount
               @removeModal()
 
           vmController.info vm.hostnameAlias, (err, vmn, info)=>

@@ -34,6 +34,85 @@
   overflow: auto;
   text-align:center;
 }
+.vm-selector {
+  position: absolute;
+  top: 50px;
+  left: calc(50% + 320px);
+  width: initial;
+  height: initial;
+  overflow: visible;
+}
+.GitDashboard .vm-selector .header {
+  color: #808080;
+  text-align: center;
+  font-weight: bold;
+  padding: 10px;
+  border: solid 2px rgba(0, 0, 0, 0.1);
+  background: #fafafa;
+  -webkit-border-radius: 3px 3px 0 0;
+  -moz-border-radius: 3px 3px 0 0;
+  border-radius: 3px 3px 0 0;
+}
+.GitDashboard .vm-selector .selection {
+  border: solid 2px rgba(0, 0, 0, 0.1);
+  border-top: none;
+  -webkit-border-radius: 0 0 3px 3px;
+  -moz-border-radius: 0 0 3px 3px;
+  border-radius: 0 0 3px 3px;
+  -webkit-transition: all 0.2s ease 0;
+  -moz-transition: all, 0.2s, ease;
+  -o-transition: all 0.2s ease 0;
+  transition: all 0.2s ease 0;
+}
+.GitDashboard .vm-selector .selection .item {
+  position: relative;
+  cursor: pointer;
+  padding: 8px 10px 8px 25px;
+  border-bottom: solid 1px rgba(0, 0, 0, 0.05);
+  -webkit-transition: all 0.2s ease 0;
+  -moz-transition: all, 0.2s, ease;
+  -o-transition: all 0.2s ease 0;
+  transition: all 0.2s ease 0;
+}
+.GitDashboard .vm-selector .selection .item:nth-child(odd) {
+  background: #FCFCFC;
+}
+.GitDashboard .vm-selector .selection .item:last-child {
+  border: none;
+}
+.GitDashboard .vm-selector .selection .item:hover {
+  background: rgba(87, 161, 230, 0.1);
+}
+.GitDashboard .vm-selector .selection .item:hover:active {
+  background: rgba(87, 161, 230, 0.15);
+}
+.GitDashboard .vm-selector .selection .item.running .bubble {
+  background: #1AAF5D;
+}
+.GitDashboard .vm-selector .selection .item.stopped .bubble {
+  background: #cccccc;
+}
+.GitDashboard .vm-selector .selection .item.active {
+  background: #2C97DD;
+  color: #fff;
+}
+.GitDashboard .vm-selector .selection .item.active .bubble {
+  background: rgba(255, 255, 255, 0.6);
+}
+.GitDashboard .vm-selector .selection .item .bubble {
+  position: absolute;
+  top: calc(50% - 3px);
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  border-radius: 50%;
+  -webkit-transition: all 0.2s ease 0;
+  -moz-transition: all, 0.2s, ease;
+  -o-transition: all 0.2s ease 0;
+  transition: all 0.2s ease 0;
+}
 .GitDashboard .tab-view {
     width: 100%;
     height: auto;
