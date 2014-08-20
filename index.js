@@ -1,7 +1,10 @@
-/* Compiled by kdc on Wed Aug 20 2014 20:04:00 GMT+0000 (UTC) */
+/* Compiled by kdc on Wed Aug 20 2014 23:11:30 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/oauth.js */
+if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
+  var appView = window.appPreview
+}
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/oauth.js */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = {
   oauthd_url: "https://oauth.io",
@@ -1218,7 +1221,7 @@ module.exports = function(document) {
   };
 };
 
-},{}]},{},[4])/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
+},{}]},{},[4])/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
 var maxSymbolsInDescription, oauthKey, reposInTrending, reposPerTopic, searchKeywords;
 
 searchKeywords = ["3D Modeling", "Data Visualization", "Game Engines", "Software Development tools", "Design Essentials", "Package Manager", "CSS Preprocessors"];
@@ -1230,7 +1233,7 @@ reposPerTopic = 10;
 maxSymbolsInDescription = 100;
 
 oauthKey = "D6R6uhEmh7kmXCVT9YzSwvHP-tk";
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
 var KiteHelper,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1253,30 +1256,31 @@ KiteHelper = (function(_super) {
   }
 
   KiteHelper.prototype.getReady = function() {
-    var _this = this;
-    return new Promise(function(resolve, reject) {
-      var JVM;
-      JVM = KD.remote.api.JVM;
-      return JVM.fetchVmsByContext(function(err, vms) {
-        var alias, kiteController, vm, _i, _len;
-        if (err) {
-          console.warn(err);
-        }
-        if (!vms) {
-          return reject(vms);
-        }
-        _this._vms = vms;
-        _this._kites = {};
-        kiteController = KD.singletons.kiteController;
-        for (_i = 0, _len = vms.length; _i < _len; _i++) {
-          vm = vms[_i];
-          alias = vm.hostnameAlias;
-          _this._kites[alias] = kiteController.getKite("os-" + vm.region, alias, 'os');
-        }
-        _this.emit('ready');
-        return resolve();
-      });
-    });
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        var JVM;
+        JVM = KD.remote.api.JVM;
+        return JVM.fetchVmsByContext(function(err, vms) {
+          var alias, kiteController, vm, _i, _len;
+          if (err) {
+            console.warn(err);
+          }
+          if (!vms) {
+            return reject(vms);
+          }
+          _this._vms = vms;
+          _this._kites = {};
+          kiteController = KD.singletons.kiteController;
+          for (_i = 0, _len = vms.length; _i < _len; _i++) {
+            vm = vms[_i];
+            alias = vm.hostnameAlias;
+            _this._kites[alias] = kiteController.getKite("os-" + vm.region, alias, 'os');
+          }
+          _this.emit('ready');
+          return resolve();
+        });
+      };
+    })(this));
   };
 
   KiteHelper.prototype.setDefaultVm = function(vm) {
@@ -1303,10 +1307,11 @@ KiteHelper = (function(_super) {
   };
 
   KiteHelper.prototype.getVms = function() {
-    var _this = this;
-    return this._vms.sort(function(a, b) {
-      return _this.getVMNumber(a) > _this.getVMNumber(b);
-    });
+    return this._vms.sort((function(_this) {
+      return function(a, b) {
+        return _this.getVMNumber(a) > _this.getVMNumber(b);
+      };
+    })(this));
   };
 
   KiteHelper.prototype.getVMNumber = function(_arg) {
@@ -1316,87 +1321,90 @@ KiteHelper = (function(_super) {
   };
 
   KiteHelper.prototype.turnOffVm = function(vm) {
-    var _this = this;
-    return new Promise(function(resolve, reject) {
-      return _this.getReady().then(function() {
-        var kite;
-        if (!(kite = _this._kites[vm])) {
-          return reject({
-            message: "No such kite for " + vm
-          });
-        }
-        return kite.vmOff().then(function() {
-          return _this.whenVmState(vm, "STOPPED").then(function() {
-            return resolve();
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        return _this.getReady().then(function() {
+          var kite;
+          if (!(kite = _this._kites[vm])) {
+            return reject({
+              message: "No such kite for " + vm
+            });
+          }
+          return kite.vmOff().then(function() {
+            return _this.whenVmState(vm, "STOPPED").then(function() {
+              return resolve();
+            })["catch"](reject);
           })["catch"](reject);
         })["catch"](reject);
-      })["catch"](reject);
-    });
+      };
+    })(this));
   };
 
   KiteHelper.prototype.whenVmState = function(vm, state) {
-    var _this = this;
-    return new Promise(function(resolve, reject) {
-      var repeat, timeout, vmController, wait;
-      vmController = KD.singletons.vmController;
-      timeout = 10 * 60 * 1000;
-      repeat = KD.utils.repeat(1000, function() {
-        return vmController.info(vm, function(err, vmn, info) {
-          if ((info != null ? info.state : void 0) === state) {
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        var repeat, timeout, vmController, wait;
+        vmController = KD.singletons.vmController;
+        timeout = 10 * 60 * 1000;
+        repeat = KD.utils.repeat(1000, function() {
+          return vmController.info(vm, function(err, vmn, info) {
+            if ((info != null ? info.state : void 0) === state) {
+              KD.utils.killRepeat(repeat);
+              KD.utils.killWait(wait);
+              return resolve();
+            }
+          });
+        });
+        return wait = KD.utils.wait(timeout, function() {
+          if (repeat != null) {
             KD.utils.killRepeat(repeat);
-            KD.utils.killWait(wait);
-            return resolve();
+            return reject();
           }
         });
-      });
-      return wait = KD.utils.wait(timeout, function() {
-        if (repeat != null) {
-          KD.utils.killRepeat(repeat);
-          return reject();
-        }
-      });
-    });
+      };
+    })(this));
   };
 
   KiteHelper.prototype.getKite = function() {
-    var _this = this;
-    return new Promise(function(resolve, reject) {
-      return _this.getReady().then(function() {
-        var kite, vm, vmController;
-        vm = _this.getVm();
-        vmController = KD.singletons.vmController;
-        if (!(kite = _this._kites[vm])) {
-          return reject({
-            message: "No such kite for " + vm
-          });
-        }
-        return vmController.info(vm, function(err, vmn, info) {
-          var timeout;
-          if (err) {
-            return reject(err);
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        return _this.getReady().then(function() {
+          var kite, vm, vmController;
+          vm = _this.getVm();
+          vmController = KD.singletons.vmController;
+          if (!(kite = _this._kites[vm])) {
+            return reject({
+              message: "No such kite for " + vm
+            });
           }
-          if (!_this.vmIsStarting && info.state === "STOPPED") {
-            _this.vmIsStarting = true;
-            timeout = 10 * 60 * 1000;
-            kite.options.timeout = timeout;
-            return kite.vmOn().then(function() {
-              return _this.whenVmState(vm, "RUNNING").then(function() {
-                _this.vmIsStarting = false;
-                return resolve(kite);
-              })["catch"](function(err) {
+          return vmController.info(vm, function(err, vmn, info) {
+            var timeout;
+            if (err) {
+              return reject(err);
+            }
+            if (!_this.vmIsStarting && info.state === "STOPPED") {
+              _this.vmIsStarting = true;
+              timeout = 10 * 60 * 1000;
+              kite.options.timeout = timeout;
+              return kite.vmOn().then(function() {
+                return _this.whenVmState(vm, "RUNNING").then(function() {
+                  _this.vmIsStarting = false;
+                  return resolve(kite);
+                })["catch"](function(err) {
+                  _this.vmIsStarting = false;
+                  return reject(err);
+                });
+              }).timeout(timeout)["catch"](function(err) {
                 _this.vmIsStarting = false;
                 return reject(err);
               });
-            }).timeout(timeout)["catch"](function(err) {
-              _this.vmIsStarting = false;
-              return reject(err);
-            });
-          } else {
-            return resolve(kite);
-          }
+            } else {
+              return resolve(kite);
+            }
+          });
         });
-      });
-    });
+      };
+    })(this));
   };
 
   KiteHelper.prototype.run = function(options, callback) {
@@ -1432,7 +1440,7 @@ KiteHelper = (function(_super) {
   return KiteHelper;
 
 })(KDController);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/utils/utils.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/utils/utils.coffee */
 var bubbleSort, flatten;
 
 flatten = function(matrix) {
@@ -1460,8 +1468,9 @@ bubbleSort = function(array) {
   }
   return modified;
 };
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/vmselector.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/views/vmselector.coffee */
 var VMSelectorView,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -1472,13 +1481,13 @@ VMSelectorView = (function(_super) {
     if (options == null) {
       options = {};
     }
+    this.chooseVm = __bind(this.chooseVm, this);
     this.kiteHelper = options.kiteHelper;
     options.callback || (options.callback = void 0);
     VMSelectorView.__super__.constructor.call(this, options, data);
   }
 
   VMSelectorView.prototype.viewAppended = function() {
-    var _this = this;
     console.log(this.kiteHelper.ready);
     this.addSubView(this.loader = new KDLoaderView({
       showLoader: true,
@@ -1486,23 +1495,25 @@ VMSelectorView = (function(_super) {
         width: 20
       }
     }));
-    this.kiteHelper.ready(function() {
-      console.log("Ready");
-      _this.addSubView(_this.header = new KDCustomHTMLView({
-        tagName: 'div',
-        cssClass: 'header',
-        partial: _this.namify(_this.kiteHelper.getVm()),
-        click: function() {
-          return _this.selection.toggleClass("hidden");
-        }
-      }));
-      _this.addSubView(_this.selection = new KDCustomHTMLView({
-        tagName: 'div',
-        cssClass: 'selection hidden'
-      }));
-      _this.updateList();
-      return _this.loader.setClass("hidden");
-    });
+    this.kiteHelper.ready((function(_this) {
+      return function() {
+        console.log("Ready");
+        _this.addSubView(_this.header = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: 'header',
+          partial: _this.namify(_this.kiteHelper.getVm()),
+          click: function() {
+            return _this.selection.toggleClass("hidden");
+          }
+        }));
+        _this.addSubView(_this.selection = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: 'selection hidden'
+        }));
+        _this.updateList();
+        return _this.loader.setClass("hidden");
+      };
+    })(this));
     return this.kiteHelper.getKite();
   };
 
@@ -1511,95 +1522,110 @@ VMSelectorView = (function(_super) {
   };
 
   VMSelectorView.prototype.updateList = function() {
-    var vmController,
-      _this = this;
+    var vmController;
     this.selection.updatePartial("");
     vmController = KD.singletons.vmController;
     console.log("Iteration begin");
-    return this.kiteHelper.getVms().forEach(function(vm) {
-      var vmItem;
-      _this.selection.addSubView(vmItem = new KDCustomHTMLView({
-        tagName: 'div',
-        cssClass: "item",
-        click: function() {
-          if (!_this.hasClass("disabled")) {
-            return _this.chooseVm(vm.hostnameAlias);
+    return this.kiteHelper.getVms().forEach((function(_this) {
+      return function(vm) {
+        var vmItem;
+        _this.selection.addSubView(vmItem = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: "item",
+          click: function() {
+            if (!_this.hasClass("disabled")) {
+              return _this.chooseVm(vm.hostnameAlias);
+            }
           }
+        }));
+        console.log("View added");
+        if (vm.hostnameAlias === _this.kiteHelper.getVm()) {
+          vmItem.setClass("active");
         }
-      }));
-      console.log("View added");
-      if (vm.hostnameAlias === _this.kiteHelper.getVm()) {
-        vmItem.setClass("active");
-      }
-      console.log("Active checked");
-      vmItem.addSubView(new KDCustomHTMLView({
-        tagName: 'span',
-        cssClass: "bubble"
-      }));
-      console.log("Active checked 1");
-      vmItem.addSubView(new KDCustomHTMLView({
-        tagName: 'span',
-        cssClass: "name",
-        partial: _this.namify(vm.hostnameAlias)
-      }));
-      console.log("Active checked 2");
-      vmController.info(vm.hostnameAlias, function(err, vmn, info) {
-        return vmItem.setClass(info != null ? info.state.toLowerCase() : void 0);
-      });
-      return console.log("VM is loaded");
-    });
+        console.log("Active checked");
+        vmItem.addSubView(new KDCustomHTMLView({
+          tagName: 'span',
+          cssClass: "bubble"
+        }));
+        console.log("Active checked 1");
+        vmItem.addSubView(new KDCustomHTMLView({
+          tagName: 'span',
+          cssClass: "name",
+          partial: _this.namify(vm.hostnameAlias)
+        }));
+        console.log("Active checked 2");
+        vmController.info(vm.hostnameAlias, function(err, vmn, info) {
+          return vmItem.setClass(info != null ? info.state.toLowerCase() : void 0);
+        });
+        return console.log("VM is loaded");
+      };
+    })(this));
   };
 
   VMSelectorView.prototype.chooseVm = function(vm) {
     var callback;
+    if (this.overlay == null) {
+      this.overlay = new KDOverlayView({
+        isRemovable: false,
+        color: "#000",
+        container: this,
+        title: "Please wait while we switch VMs"
+      });
+    }
     callback = this.getOptions().callback;
     this.kiteHelper.setDefaultVm(vm);
     callback(vm);
     this.header.updatePartial(this.namify(vm));
-    return this.updateList();
+    this.updateList();
+    this.overlay.remove();
+    return delete this.overlay;
   };
 
-  VMSelectorView.prototype.turnOffVm = function(vm) {
-    var _this = this;
+  VMSelectorView.prototype.turnOffVm = function(vm, toMount) {
     this.header.setClass("hidden");
     this.selection.setClass("hidden");
     this.loader.unsetClass("hidden");
-    return this.kiteHelper.turnOffVm(vm).then(function() {
-      return KD.utils.wait(10000, function() {
-        _this.chooseVm(toMount);
-        _this.updateList();
-        _this.header.unsetClass("hidden");
-        _this.selection.unsetClass("hidden");
-        return _this.loader.setClass("hidden");
-      });
-    })["catch"](function(err) {});
+    return this.kiteHelper.turnOffVm(vm).then((function(_this) {
+      return function() {
+        return KD.utils.wait(10000, function() {
+          _this.chooseVm(toMount);
+          _this.updateList();
+          _this.header.unsetClass("hidden");
+          _this.selection.unsetClass("hidden");
+          return _this.loader.setClass("hidden");
+        });
+      };
+    })(this))["catch"]((function(_this) {
+      return function(err) {};
+    })(this));
   };
 
   VMSelectorView.prototype.turnOffVmModal = function(toMount) {
-    var container, vmController,
-      _this = this;
+    var container, vmController;
     if (!this.modal) {
       vmController = KD.singletons.vmController;
       this.addSubView(container = new KDCustomHTMLView({
         tagName: 'div'
       }));
-      this.kiteHelper.getVms().forEach(function(vm) {
-        var vmItem;
-        container.addSubView(vmItem = new KDCustomHTMLView({
-          tagName: 'div',
-          cssClass: "item",
-          partial: "<div class=\"bubble\"></div>\n" + vm.hostnameAlias,
-          click: function(event) {
-            _this.turnOffVm(vm.hostnameAlias, toMount);
-            return _this.removeModal();
-          }
-        }));
-        return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
-          if ((info != null ? info.state : void 0) !== "RUNNING") {
-            return vmItem.destroy();
-          }
-        });
-      });
+      this.kiteHelper.getVms().forEach((function(_this) {
+        return function(vm) {
+          var vmItem;
+          container.addSubView(vmItem = new KDCustomHTMLView({
+            tagName: 'div',
+            cssClass: "item",
+            partial: "<div class=\"bubble\"></div>\n" + vm.hostnameAlias,
+            click: function(event) {
+              _this.turnOffVm(vm.hostnameAlias, toMount);
+              return _this.removeModal();
+            }
+          }));
+          return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
+            if ((info != null ? info.state : void 0) !== "RUNNING") {
+              return vmItem.destroy();
+            }
+          });
+        };
+      })(this));
       return this.modal = new KDModalView({
         title: "Choose VM To Turn Off",
         overlay: true,
@@ -1608,9 +1634,11 @@ VMSelectorView = (function(_super) {
         height: "auto",
         cssClass: "new-kdmodal",
         view: container,
-        cancel: function() {
-          return _this.removeModal();
-        }
+        cancel: (function(_this) {
+          return function() {
+            return _this.removeModal();
+          };
+        })(this)
       });
     }
   };
@@ -1631,7 +1659,7 @@ VMSelectorView = (function(_super) {
   return VMSelectorView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/modal/clonemodal.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/modal/clonemodal.coffee */
 var GitdashboardCloneModal,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1641,7 +1669,6 @@ GitdashboardCloneModal = (function(_super) {
   __extends(GitdashboardCloneModal, _super);
 
   function GitdashboardCloneModal(options, data) {
-    var _this = this;
     if (options == null) {
       options = {};
     }
@@ -1663,33 +1690,36 @@ GitdashboardCloneModal = (function(_super) {
       contextMenu: false,
       loadFilesOnInit: true
     });
-    this.kiteHelper.getKite().then(function(kite) {
-      _this.unmountAll();
-      _this.finderController.mountVm(_this.kiteHelper.getVmByName(_this.kiteHelper.getVm()));
-      return _this.finderController.isNodesHiddenFor = function() {
-        return true;
+    this.kiteHelper.getKite().then((function(_this) {
+      return function(kite) {
+        _this.unmountAll();
+        _this.finderController.mountVm(_this.kiteHelper.getVmByName(_this.kiteHelper.getVm()));
+        return _this.finderController.isNodesHiddenFor = function() {
+          return true;
+        };
       };
-    });
+    })(this));
     GitdashboardCloneModal.__super__.constructor.call(this, options, data);
   }
 
   GitdashboardCloneModal.prototype.viewAppended = function() {
-    var _this = this;
-    return this.kiteHelper.getReady().then(function() {
-      _this.addSubView(_this.nameInput = new KDInputView({
-        placeholder: "Name"
-      }));
-      _this.addSubView(_this.finderController.getView());
-      _this.addSubView(new KDButtonView({
-        title: "Clone to my VM",
-        cssClass: "cupid-green",
-        callback: _this.beginClone
-      }));
-      return _this.addSubView(new KDButtonView({
-        title: "Cancel",
-        callback: _this.cancel
-      }));
-    });
+    return this.kiteHelper.getReady().then((function(_this) {
+      return function() {
+        _this.addSubView(_this.nameInput = new KDInputView({
+          placeholder: "Name"
+        }));
+        _this.addSubView(_this.finderController.getView());
+        _this.addSubView(new KDButtonView({
+          title: "Clone to my VM",
+          cssClass: "cupid-green",
+          callback: _this.beginClone
+        }));
+        return _this.addSubView(new KDButtonView({
+          title: "Cancel",
+          callback: _this.cancel
+        }));
+      };
+    })(this));
   };
 
   GitdashboardCloneModal.prototype.beginClone = function() {
@@ -1711,7 +1741,7 @@ GitdashboardCloneModal = (function(_super) {
   return GitdashboardCloneModal;
 
 })(KDModalView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/repoview.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/views/repoview.coffee */
 var RepoView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1797,7 +1827,7 @@ RepoView = (function(_super) {
   return RepoView;
 
 })(KDListItemView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/boxedlistview.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/views/boxedlistview.coffee */
 var BoxedListView,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1840,7 +1870,7 @@ BoxedListView = (function(_super) {
   return BoxedListView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
 var RepoDataController,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1866,56 +1896,61 @@ RepoDataController = (function(_super) {
   }
 
   RepoDataController.prototype.getTrendingRepos = function(callback) {
-    var _this = this;
-    return Promise.all(searchKeywords.map(function(topic) {
-      var link;
-      link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars&order=desc");
-      return $.getJSON(link).then(function(json) {
-        var i, _i, _results;
-        _results = [];
-        for (i = _i = 0; 0 <= reposPerTopic ? _i < reposPerTopic : _i > reposPerTopic; i = 0 <= reposPerTopic ? ++_i : --_i) {
-          if (json.items[i] != null) {
-            _results.push(_this.generateOptions(json.items[i]));
+    return this.appStorage.fetchStorage((function(_this) {
+      return function() {
+        return Promise.all(searchKeywords.map(function(topic) {
+          var link;
+          link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars&order=desc");
+          return $.getJSON(link).then(function(json) {
+            var i, _i, _results;
+            _results = [];
+            for (i = _i = 0; 0 <= reposPerTopic ? _i < reposPerTopic : _i > reposPerTopic; i = 0 <= reposPerTopic ? ++_i : --_i) {
+              if (json.items[i] != null) {
+                _results.push(_this.generateOptions(json.items[i]));
+              }
+            }
+            return _results;
+          });
+        })).then(function(results) {
+          var repoO, repos, _i, _len;
+          repos = _this.formatResults(results);
+          console.log(repos);
+          for (_i = 0, _len = repos.length; _i < _len; _i++) {
+            repoO = repos[_i];
+            repoO["kiteHelper"] = _this.kiteHelper;
+            callback(new RepoView(repoO));
           }
-        }
-        return _results;
-      });
-    })).then(function(results) {
-      var repoO, repos, _i, _len;
-      repos = _this.formatResults(results);
-      console.log(repos);
-      for (_i = 0, _len = repos.length; _i < _len; _i++) {
-        repoO = repos[_i];
-        repoO["kiteHelper"] = _this.kiteHelper;
-        callback(new RepoView(repoO));
-      }
-      return _this.appStorage.setValue("repos", repos);
-    })["catch"](function(err) {
-      var option, options, _i, _len, _results;
-      console.log("Throttle load");
-      console.log("Block");
-      options = _this.appStorage.getValue("repos");
-      _results = [];
-      for (_i = 0, _len = options.length; _i < _len; _i++) {
-        option = options[_i];
-        option["kiteHelper"] = _this.kiteHelper;
-        _results.push(callback(new RepoView(option)));
-      }
-      return _results;
-    });
+          return _this.appStorage.setValue("repos", JSON.stringify(repos));
+        })["catch"](function(err) {
+          var option, options, _i, _len, _results;
+          console.log("Throttle load");
+          console.log("Block");
+          options = JSON.parse(Encoder.htmlDecode(_this.appStorage.getValue("repos")));
+          _results = [];
+          for (_i = 0, _len = options.length; _i < _len; _i++) {
+            option = options[_i];
+            option["kiteHelper"] = _this.kiteHelper;
+            _results.push(callback(new RepoView(option)));
+          }
+          return _results;
+        });
+      };
+    })(this), true);
   };
 
   RepoDataController.prototype.getMyRepos = function(callback, authToken) {
-    var _this = this;
-    return authToken.get("/user/repos").done(function(response) {
-      var repo, _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = response.length; _i < _len; _i++) {
-        repo = response[_i];
-        _results.push(callback(new RepoView(_this.generateOptions(repo))));
-      }
-      return _results;
-    }).fail(function(err) {
+    return authToken.get("/user/repos").done((function(_this) {
+      return function(response) {
+        var repo, _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = response.length; _i < _len; _i++) {
+          repo = response[_i];
+          repo["kiteHelper"] = _this.kiteHelper;
+          _results.push(callback(new RepoView(_this.generateOptions(repo))));
+        }
+        return _results;
+      };
+    })(this)).fail(function(err) {
       return console.log(err);
     });
   };
@@ -1946,7 +1981,7 @@ RepoDataController = (function(_super) {
   return RepoDataController;
 
 })(KDController);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/trendingpageview.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/views/trendingpageview.coffee */
 var GitDashboardTrendingPageView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -1979,7 +2014,7 @@ GitDashboardTrendingPageView = (function(_super) {
   return GitDashboardTrendingPageView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/myrepospageview.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/views/myrepospageview.coffee */
 var GitDashboardMyReposPageView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -2016,7 +2051,7 @@ GitDashboardMyReposPageView = (function(_super) {
   return GitDashboardMyReposPageView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/views/mainview.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/views/mainview.coffee */
 var GitDashboardMainView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -2032,6 +2067,7 @@ GitDashboardMainView = (function(_super) {
     this.switchVm = __bind(this.switchVm, this);
     this.initPersonal = __bind(this.initPersonal, this);
     this.oauthAuthentication = __bind(this.oauthAuthentication, this);
+    this.viewAppended = __bind(this.viewAppended, this);
     options.cssClass = 'GitDashboard';
     GitDashboardMainView.__super__.constructor.call(this, options, data);
     this.kiteHelper = new KiteHelper;
@@ -2063,7 +2099,7 @@ GitDashboardMainView = (function(_super) {
       handle.setClass("handle");
     }
     this.addSubView(this.vmSelector = new VMSelectorView({
-      callback: this.switchVM,
+      callback: this.switchVm,
       kiteHelper: this.kiteHelper,
       cssClass: "vm-selector"
     }));
@@ -2073,13 +2109,14 @@ GitDashboardMainView = (function(_super) {
   };
 
   GitDashboardMainView.prototype.oauthAuthentication = function() {
-    var _this = this;
     return OAuth.popup("github", {
-      cache: true.done(function(result) {
+      cache: true
+    }).done((function(_this) {
+      return function(result) {
         return _this.initPersonal();
-      }).fail(function(err) {
-        return console.log(err);
-      })
+      };
+    })(this)).fail(function(err) {
+      return console.log(err);
     });
   };
 
@@ -2095,25 +2132,22 @@ GitDashboardMainView = (function(_super) {
   };
 
   GitDashboardMainView.prototype.switchVm = function(vm) {
-    var _this = this;
-    this.overlay = new KDOverlayView(this.overlay == null ? {
-      isRemovable: false,
-      color: "#000",
-      container: this
-    } : void 0);
-    this.kiteHelper.getKite().then(function(kite) {
-      _this.overlay.remove();
-      return delete _this.overlay;
-    })["catch"](function(err) {
-      return _this.vmSelector.tunOffVmModal();
-    });
-    return this.loginButton.hide();
+    return this.kiteHelper.getKite().then((function(_this) {
+      return function(kite) {
+        _this.overlay.remove();
+        return delete _this.overlay;
+      };
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        return _this.vmSelector.turnOffVmModal(vm);
+      };
+    })(this));
   };
 
   return GitDashboardMainView;
 
 })(KDView);
-/* BLOCK STARTS: /home/alexchistyakov/Applications/Gitdashboard.kdapp/index.coffee */
+/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/index.coffee */
 var GitDashboardController,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };

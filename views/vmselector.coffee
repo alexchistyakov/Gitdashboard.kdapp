@@ -57,13 +57,22 @@ class VMSelectorView extends KDView
 
       console.log "VM is loaded"
 
-  chooseVm: (vm)->
+  chooseVm: (vm)=>
+    unless @overlay?
+        @overlay = new KDOverlayView
+            isRemovable: false
+            color: "#000"
+            container: @
+            title: "Please wait while we switch VMs"
+    {callback} = @getOptions()
     @kiteHelper.setDefaultVm vm
-    @getOptions().callback(vm)
+    callback(vm)
     @header.updatePartial @namify vm
     @updateList()
+    @overlay.remove()
+    delete @overlay
 
-  turnOffVm: (vm)->
+  turnOffVm: (vm,toMount)->
     @header.setClass "hidden"
     @selection.setClass "hidden"
     @loader.unsetClass "hidden"

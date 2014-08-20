@@ -9,6 +9,7 @@ class RepoDataController extends KDController
         @registerSingleton "trendingPageController", this, yes
         
     getTrendingRepos:(callback)->
+        @appStorage.fetchStorage =>
             Promise.all(searchKeywords.map (topic) =>
                 link = encodeURI("https://api.github.com/search/repositories?q=#{topic}&sort=stars&order=desc")
                 return $.getJSON(link).then (json) =>
@@ -20,18 +21,20 @@ class RepoDataController extends KDController
                 for repoO in repos
                     repoO["kiteHelper"] = @kiteHelper
                     callback(new RepoView repoO)
-                @appStorage.setValue "repos" , repos
+                @appStorage.setValue "repos" , JSON.stringify repos
             .catch (err) =>
                 console.log "Throttle load"
                 console.log "Block"
-                options = @appStorage.getValue("repos")
+                options = JSON.parse Encoder.htmlDecode @appStorage.getValue("repos")
                 for option in options
                     option["kiteHelper"] = @kiteHelper
                     callback(new RepoView option)
+        ,true
     getMyRepos:(callback,authToken)=>
         authToken.get("/user/repos")
         .done (response) =>
             for repo in response
+                repo["kiteHelper"] = @kiteHelper
                 callback(new RepoView @generateOptions(repo))
         .fail (err) ->
             console.log err
