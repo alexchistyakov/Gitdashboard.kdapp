@@ -58,9 +58,8 @@ class VMSelectorView extends KDView
       console.log "VM is loaded"
 
   chooseVm: (vm)->
-    {callback} = @getOptions()
     @kiteHelper.setDefaultVm vm
-    callback(vm)
+    @getOptions().callback(vm)
     @header.updatePartial @namify vm
     @updateList()
 
