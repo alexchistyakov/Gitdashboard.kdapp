@@ -1,4 +1,4 @@
-/* Compiled by kdc on Wed Aug 20 2014 19:33:23 GMT+0000 (UTC) */
+/* Compiled by kdc on Wed Aug 20 2014 19:53:12 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1566,11 +1566,10 @@ VMSelectorView = (function(_super) {
     this.kiteHelper.setDefaultVm(vm);
     callback(vm);
     this.header.updatePartial(this.namify(vm));
-    this.updateList();
-    return console.log("Chosen");
+    return this.updateList();
   };
 
-  VMSelectorView.prototype.turnOffVm = function(vm, toMount) {
+  VMSelectorView.prototype.turnOffVm = function(vm) {
     this.header.setClass("hidden");
     this.selection.setClass("hidden");
     this.loader.unsetClass("hidden");
@@ -1663,10 +1662,14 @@ GitdashboardCloneModal = (function(_super) {
     }
     this.unmountAll = __bind(this.unmountAll, this);
     this.beginClone = __bind(this.beginClone, this);
-    this.viewAppended = __bind(this.viewAppended, this);
     options.cssClass = "clone-modal";
     this.repoView = options.repoView;
     this.kiteHelper = options.kiteHelper;
+    console.log(this.kiteHelper);
+    this.vmSelector = new VMSelectorView({
+      callback: this.switchVM,
+      kiteHelper: this.kiteHelper
+    });
     this.finderController = new NFinderController({
       hideDotFiles: true,
       nodeIdPath: "path",
@@ -1688,22 +1691,23 @@ GitdashboardCloneModal = (function(_super) {
   }
 
   GitdashboardCloneModal.prototype.viewAppended = function() {
-    console.log(this.kiteHelper);
-    this.addSubView(this.vmSelector);
-    this.addSubView(this.nameInput = new KDInputView({
-      placeholder: "Name"
-    }));
-    this.unmountAll();
-    this.addSubView(this.finderController.getView());
-    this.addSubView(new KDButtonView({
-      title: "Clone to my VM",
-      cssClass: "cupid-green",
-      callback: this.beginClone
-    }));
-    return this.addSubView(new KDButtonView({
-      title: "Cancel",
-      callback: this.cancel
-    }));
+    return this.kiteHelper.getReady().then((function(_this) {
+      return function() {
+        _this.addSubView(_this.nameInput = new KDInputView({
+          placeholder: "Name"
+        }));
+        _this.addSubView(_this.finderController.getView());
+        _this.addSubView(new KDButtonView({
+          title: "Clone to my VM",
+          cssClass: "cupid-green",
+          callback: _this.beginClone
+        }));
+        return _this.addSubView(new KDButtonView({
+          title: "Cancel",
+          callback: _this.cancel
+        }));
+      };
+    })(this));
   };
 
   GitdashboardCloneModal.prototype.beginClone = function() {
@@ -2093,13 +2097,13 @@ GitDashboardMainView = (function(_super) {
   };
 
   GitDashboardMainView.prototype.oauthAuthentication = function() {
-    var callback, options;
-    callback = this.initPersonal;
-    return OAuth.popup("github", options = {
+    return OAuth.popup("github", {
       cache: true
-    }).done(function(result) {
-      return callback();
-    }).fail(function(err) {
+    }).done((function(_this) {
+      return function(result) {
+        return _this.initPersonal();
+      };
+    })(this)).fail(function(err) {
       return console.log(err);
     });
   };
@@ -2121,7 +2125,7 @@ GitDashboardMainView = (function(_super) {
       color: "#000",
       container: this
     } : void 0);
-    return this.kiteHelper.getKite().then((function(_this) {
+    this.kiteHelper.getKite().then((function(_this) {
       return function(kite) {
         _this.overlay.remove();
         return delete _this.overlay;
@@ -2131,6 +2135,7 @@ GitDashboardMainView = (function(_super) {
         return _this.vmSelector.tunOffVmModal();
       };
     })(this));
+    return this.loginButton.hide();
   };
 
   return GitDashboardMainView;

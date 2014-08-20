@@ -5,8 +5,8 @@ class GitDashboardMainView extends KDView
         @kiteHelper = new KiteHelper
         @controller = new RepoDataController
             kiteHelper: @kiteHelper
+
     viewAppended: ->
-            
         @addSubView @loginButton = new KDButtonView
             cssClass: "login-button"
             title: "Connect with GitHub"
@@ -34,12 +34,12 @@ class GitDashboardMainView extends KDView
             @initPersonal()
             
     oauthAuthentication: =>
-        callback = @initPersonal
-        OAuth.popup("github",options={cache: true})
-        .done (result) ->
-            callback()
+        OAuth.popup "github", cache: true
+        .done (result) =>
+            @initPersonal()
         .fail (err) ->
             console.log err
+
     initPersonal: =>
         @tabView.addPane @myReposPagePane = new KDTabPaneView
             title: "My Repos"
@@ -57,3 +57,4 @@ class GitDashboardMainView extends KDView
              delete @overlay
         .catch (err) => 
             @vmSelector.tunOffVmModal()
+        @loginButton.hide()

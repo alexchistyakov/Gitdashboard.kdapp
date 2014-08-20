@@ -3,6 +3,7 @@ class VMSelectorView extends KDView
       @kiteHelper = options.kiteHelper
       options.callback or= undefined
       super options,data
+
   viewAppended: ->
     console.log @kiteHelper.ready
     @addSubView @loader = new KDLoaderView
@@ -11,6 +12,7 @@ class VMSelectorView extends KDView
           width       : 20
     @kiteHelper.ready =>
       console.log "Ready"
+      
       @addSubView @header = new KDCustomHTMLView
         tagName       : 'div'
         cssClass      : 'header'
@@ -52,17 +54,17 @@ class VMSelectorView extends KDView
       console.log "Active checked 2"
       vmController.info vm.hostnameAlias, (err, vmn, info)=>
         vmItem.setClass info?.state.toLowerCase()
-        
+
       console.log "VM is loaded"
+
   chooseVm: (vm)->
     {callback} = @getOptions()
     @kiteHelper.setDefaultVm vm
     callback(vm)
     @header.updatePartial @namify vm
     @updateList()
-    console.log "Chosen"
-    
-  turnOffVm: (vm, toMount)->
+
+  turnOffVm: (vm)->
     @header.setClass "hidden"
     @selection.setClass "hidden"
     @loader.unsetClass "hidden"
@@ -75,7 +77,7 @@ class VMSelectorView extends KDView
         @selection.unsetClass "hidden"
         @loader.setClass "hidden"
     .catch (err)=>
-      
+
 
   turnOffVmModal:(toMount) ->
       unless @modal

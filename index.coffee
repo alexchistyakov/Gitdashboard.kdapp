@@ -1,7 +1,6 @@
 class GitDashboardController extends AppController
 
   constructor:(options = {}, data)->
-    
     options.view    = new GitDashboardMainView
     options.appInfo =
       name : "Git Dashboard"
@@ -11,6 +10,7 @@ class GitDashboardController extends AppController
 
 do ->
   OAuth.initialize oauthKey
+
   if appView?
     view = new GitDashboardMainView
     appView.addSubView view
