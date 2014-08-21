@@ -1,4 +1,4 @@
-/* Compiled by kdc on Tue Aug 19 2014 21:44:41 GMT+0000 (UTC) */
+/* Compiled by kdc on Thu Aug 21 2014 00:07:24 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1533,10 +1533,23 @@ GitDashboardTrendingPageView = (function(_super) {
       return function(e) {
         if (e.keyCode === 13) {
           _this.container.empty();
-          return _this.controller.getSearchedRepos(_this.repoReceived, _this.searchBox.getValue());
+          _this.controller.getSearchedRepos(_this.repoReceived, _this.searchBox.getValue());
+          return $(".returnToTrendingPageButton").animate({
+            opacity: 1
+          });
         }
       };
     })(this));
+    this.addSubView(this.returnToTrendingPageButton = new KDButtonView({
+      title: "Return to Trending Page",
+      cssClass: "returnToTrendingPageButton clean-gray",
+      callback: (function(_this) {
+        return function() {
+          _this.container.empty();
+          return _this.controller.getTrendingRepos(_this.repoReceived);
+        };
+      })(this)
+    }));
     this.addSubView(this.container);
     return this.controller.getTrendingRepos(this.repoReceived);
   };
