@@ -1,4 +1,4 @@
-/* Compiled by kdc on Thu Aug 21 2014 00:07:24 GMT+0000 (UTC) */
+/* Compiled by kdc on Thu Aug 21 2014 00:19:47 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1545,6 +1545,9 @@ GitDashboardTrendingPageView = (function(_super) {
       cssClass: "returnToTrendingPageButton clean-gray",
       callback: (function(_this) {
         return function() {
+          $(".returnToTrendingPageButton").animate({
+            opacity: 0
+          });
           _this.container.empty();
           return _this.controller.getTrendingRepos(_this.repoReceived);
         };

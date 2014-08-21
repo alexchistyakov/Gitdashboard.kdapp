@@ -23,6 +23,7 @@ class GitDashboardTrendingPageView extends KDView
       title: "Return to Trending Page"
       cssClass: "returnToTrendingPageButton clean-gray"
       callback: =>
+        $(".returnToTrendingPageButton").animate(opacity: 0)
         @container.empty()
         @controller.getTrendingRepos(@repoReceived)
 
