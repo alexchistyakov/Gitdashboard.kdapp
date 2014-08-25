@@ -1,6 +1,7 @@
 class VMSelectorView extends KDView
   constructor: (options={},data) ->
       @kiteHelper = options.kiteHelper
+      @container = options.container
       options.callback or= undefined
       super options,data
 
@@ -58,33 +59,36 @@ class VMSelectorView extends KDView
       console.log "VM is loaded"
 
   chooseVm: (vm)=>
-    unless @overlay?
-        @overlay = new KDOverlayView
-            isRemovable: false
-            color: "#000"
-            container: @
-            title: "Please wait while we switch VMs"
     {callback} = @getOptions()
     @kiteHelper.setDefaultVm vm
     callback(vm)
     @header.updatePartial @namify vm
     @updateList()
-    @overlay.remove()
-    delete @overlay
+    
 
   turnOffVm: (vm,toMount)->
-    @header.setClass "hidden"
-    @selection.setClass "hidden"
-    @loader.unsetClass "hidden"
-    @kiteHelper.turnOffVm(vm).then =>
-      # Wait for Koding to register other vm is off
-      KD.utils.wait 10000, =>
-        @chooseVm(toMount)
-        @updateList()
-        @header.unsetClass "hidden"
-        @selection.unsetClass "hidden"
-        @loader.setClass "hidden"
-    .catch (err)=>
+      console.log @overlay
+      unless @overlay?
+        @overlay = new KDOverlayView
+            isRemovable: false
+            color: "#000"
+            container: @container
+            title: "Please wait while we switch VMs"
+        @header.setClass "hidden"
+        @selection.setClass "hidden"
+        @loader.unsetClass "hidden"
+        @kiteHelper.turnOffVm(vm).then =>
+          # Wait for Koding to register other vm is off
+          KD.utils.wait 10000, =>
+            @chooseVm(toMount)
+            @updateList()
+            @header.unsetClass "hidden"
+            @selection.unsetClass "hidden"
+            @loader.setClass "hidden"
+            @overlay.remove()
+            delete @overlay
+        .catch (err)=>
+            console.log err
 
 
   turnOffVmModal:(toMount) ->

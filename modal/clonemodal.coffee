@@ -2,15 +2,10 @@ class GitdashboardCloneModal extends KDModalView
 
   constructor: (options = {}, data)->
     options.cssClass = "clone-modal"
+    @cloneUrl = options.cloneUrl
     @repoView = options.repoView
-    
     @kiteHelper = options.kiteHelper
     
-    console.log @kiteHelper
-    @vmSelector = new VMSelectorView
-        callback: @switchVM
-        kiteHelper: @kiteHelper
-
     @finderController = new NFinderController
         hideDotFiles:true
         nodeIdPath: "path"
@@ -36,13 +31,28 @@ class GitdashboardCloneModal extends KDModalView
         @addSubView new KDButtonView
             title: "Clone to my VM"
             cssClass: "cupid-green"
-            callback: @beginClone
-
-        @addSubView new KDButtonView
-            title: "Cancel"
-            callback: @cancel
+            callback: =>
+                unless @nameInput.getValue() is ""
+                    @beginClone()
   beginClone: =>
-    fullPath = @finderController.treeController.selectedNodes[0].data.path+""+@nameInput.getValue
+    fullPath = @finderController.treeController.selectedNodes[0].data.path+"/"+@nameInput.getValue()
+    fullPath = fullPath.substring fullPath.indexOf "/"
+    console.log fullPath
+    @repoView.state = CLONING
+    @repoView.updateView()
+    @destroy()
+    @kiteHelper.run
+        command: "git clone "+@cloneUrl+" "+fullPath
+        password: null
+    ,(err,res) =>
+        if err? or res.exitStatus is not 0
+            new KDModalView
+                title: "Error"
+                view: new KDView
+                    partial: res.stderr
+        else 
+            
+        @repoView.updateState()
   unmountAll: =>
     @finderController.unmountVm vmR.vmName for vmR in @finderController.vms
     

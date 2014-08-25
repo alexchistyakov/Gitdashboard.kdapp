@@ -1,4 +1,4 @@
-/* Compiled by kdc on Wed Aug 20 2014 23:11:30 GMT+0000 (UTC) */
+/* Compiled by kdc on Mon Aug 25 2014 21:31:40 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1222,7 +1222,9 @@ module.exports = function(document) {
 };
 
 },{}]},{},[4])/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
-var maxSymbolsInDescription, oauthKey, reposInTrending, reposPerTopic, searchKeywords;
+var CLONED, CLONING, NOT_CLONED, directoryExists, maxSymbolsInDescription, oauthKey, reposInTrending, reposPerTopic, searchKeywords, _ref;
+
+_ref = [0, 1, 2], NOT_CLONED = _ref[0], CLONING = _ref[1], CLONED = _ref[2];
 
 searchKeywords = ["3D Modeling", "Data Visualization", "Game Engines", "Software Development tools", "Design Essentials", "Package Manager", "CSS Preprocessors"];
 
@@ -1231,6 +1233,8 @@ reposInTrending = 50;
 reposPerTopic = 10;
 
 maxSymbolsInDescription = 100;
+
+directoryExists = false;
 
 oauthKey = "D6R6uhEmh7kmXCVT9YzSwvHP-tk";
 /* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
@@ -1483,6 +1487,7 @@ VMSelectorView = (function(_super) {
     }
     this.chooseVm = __bind(this.chooseVm, this);
     this.kiteHelper = options.kiteHelper;
+    this.container = options.container;
     options.callback || (options.callback = void 0);
     VMSelectorView.__super__.constructor.call(this, options, data);
   }
@@ -1564,40 +1569,43 @@ VMSelectorView = (function(_super) {
 
   VMSelectorView.prototype.chooseVm = function(vm) {
     var callback;
-    if (this.overlay == null) {
-      this.overlay = new KDOverlayView({
-        isRemovable: false,
-        color: "#000",
-        container: this,
-        title: "Please wait while we switch VMs"
-      });
-    }
     callback = this.getOptions().callback;
     this.kiteHelper.setDefaultVm(vm);
     callback(vm);
     this.header.updatePartial(this.namify(vm));
-    this.updateList();
-    this.overlay.remove();
-    return delete this.overlay;
+    return this.updateList();
   };
 
   VMSelectorView.prototype.turnOffVm = function(vm, toMount) {
-    this.header.setClass("hidden");
-    this.selection.setClass("hidden");
-    this.loader.unsetClass("hidden");
-    return this.kiteHelper.turnOffVm(vm).then((function(_this) {
-      return function() {
-        return KD.utils.wait(10000, function() {
-          _this.chooseVm(toMount);
-          _this.updateList();
-          _this.header.unsetClass("hidden");
-          _this.selection.unsetClass("hidden");
-          return _this.loader.setClass("hidden");
-        });
-      };
-    })(this))["catch"]((function(_this) {
-      return function(err) {};
-    })(this));
+    console.log(this.overlay);
+    if (this.overlay == null) {
+      this.overlay = new KDOverlayView({
+        isRemovable: false,
+        color: "#000",
+        container: this.container,
+        title: "Please wait while we switch VMs"
+      });
+      this.header.setClass("hidden");
+      this.selection.setClass("hidden");
+      this.loader.unsetClass("hidden");
+      return this.kiteHelper.turnOffVm(vm).then((function(_this) {
+        return function() {
+          return KD.utils.wait(10000, function() {
+            _this.chooseVm(toMount);
+            _this.updateList();
+            _this.header.unsetClass("hidden");
+            _this.selection.unsetClass("hidden");
+            _this.loader.setClass("hidden");
+            _this.overlay.remove();
+            return delete _this.overlay;
+          });
+        };
+      })(this))["catch"]((function(_this) {
+        return function(err) {
+          return console.log(err);
+        };
+      })(this));
+    }
   };
 
   VMSelectorView.prototype.turnOffVmModal = function(toMount) {
@@ -1675,13 +1683,9 @@ GitdashboardCloneModal = (function(_super) {
     this.unmountAll = __bind(this.unmountAll, this);
     this.beginClone = __bind(this.beginClone, this);
     options.cssClass = "clone-modal";
+    this.cloneUrl = options.cloneUrl;
     this.repoView = options.repoView;
     this.kiteHelper = options.kiteHelper;
-    console.log(this.kiteHelper);
-    this.vmSelector = new VMSelectorView({
-      callback: this.switchVM,
-      kiteHelper: this.kiteHelper
-    });
     this.finderController = new NFinderController({
       hideDotFiles: true,
       nodeIdPath: "path",
@@ -1709,14 +1713,14 @@ GitdashboardCloneModal = (function(_super) {
           placeholder: "Name"
         }));
         _this.addSubView(_this.finderController.getView());
-        _this.addSubView(new KDButtonView({
+        return _this.addSubView(new KDButtonView({
           title: "Clone to my VM",
           cssClass: "cupid-green",
-          callback: _this.beginClone
-        }));
-        return _this.addSubView(new KDButtonView({
-          title: "Cancel",
-          callback: _this.cancel
+          callback: function() {
+            if (_this.nameInput.getValue() !== "") {
+              return _this.beginClone();
+            }
+          }
         }));
       };
     })(this));
@@ -1724,7 +1728,30 @@ GitdashboardCloneModal = (function(_super) {
 
   GitdashboardCloneModal.prototype.beginClone = function() {
     var fullPath;
-    return fullPath = this.finderController.treeController.selectedNodes[0].data.path + "" + this.nameInput.getValue;
+    fullPath = this.finderController.treeController.selectedNodes[0].data.path + "/" + this.nameInput.getValue();
+    fullPath = fullPath.substring(fullPath.indexOf("/"));
+    console.log(fullPath);
+    this.repoView.state = CLONING;
+    this.repoView.updateView();
+    this.destroy();
+    return this.kiteHelper.run({
+      command: "git clone " + this.cloneUrl + " " + fullPath,
+      password: null
+    }, (function(_this) {
+      return function(err, res) {
+        if ((err != null) || res.exitStatus === !0) {
+          new KDModalView({
+            title: "Error",
+            view: new KDView({
+              partial: res.stderr
+            })
+          });
+        } else {
+
+        }
+        return _this.repoView.updateState();
+      };
+    })(this));
   };
 
   GitdashboardCloneModal.prototype.unmountAll = function() {
@@ -1754,6 +1781,9 @@ RepoView = (function(_super) {
     if (options == null) {
       options = {};
     }
+    this.writeInstalled = __bind(this.writeInstalled, this);
+    this.upadateView = __bind(this.upadateView, this);
+    this.updateState = __bind(this.updateState, this);
     this.cloneToMachine = __bind(this.cloneToMachine, this);
     options.name || (options.name = "Dummy Name");
     options.user || (options.user = "user");
@@ -1765,6 +1795,8 @@ RepoView = (function(_super) {
     options.cssClass = KD.utils.curry("repoview-container", options.cssClass);
     options.url || (options.url = "");
     this.kiteHelper = options.kiteHelper;
+    this.state = NOT_CLONED;
+    this.updateState();
     if (options.description.length > maxSymbolsInDescription) {
       options.description = options.description.substring(0, maxSymbolsInDescription) + "...";
     } else {
@@ -1804,16 +1836,13 @@ RepoView = (function(_super) {
       cssClass: "description",
       partial: description
     }));
-    return this.addSubView(new KDButtonView({
-      title: "Clone",
-      callback: this.cloneToMachine,
-      cssClass: "cupid-green clone-button"
-    }));
+    return this.addSubView(this.cloneButton = new KDButtonView);
   };
 
   RepoView.prototype.cloneToMachine = function() {
     return new GitdashboardCloneModal({
       repoView: this,
+      cloneUrl: this.getOptions().cloneUrl,
       kiteHelper: this.kiteHelper
     });
   };
@@ -1824,52 +1853,59 @@ RepoView = (function(_super) {
     return window.open(url, "_blank");
   };
 
+  RepoView.prototype.updateState = function() {
+    if (!exists) {
+      this.state = NOT_CLONED;
+    } else {
+      this.kiteHelper.run({
+        command: "cd ~/.gitdashboard; cat repodata | grep " + this.getOptions().name
+      }, (function(_this) {
+        return function(err, res) {
+          if (!res.stdout) {
+            return _this.state = NOT_CLONED;
+          } else {
+            return _this.state = CLONED;
+          }
+        };
+      })(this));
+    }
+    return this.updateView();
+  };
+
+  RepoView.prototype.upadateView = function() {
+    if (this.state === CLONED) {
+      this.cloneButton.enable();
+      this.cloneButton.unsetClass("cupid-green");
+      this.cloneButton.setClass("small-blue");
+      return this.cloneButton.setTitle("Open");
+    } else if (this.state === NOT_CLONED) {
+      this.cloneButton.enable();
+      this.cloneButton.setTitle("Clone");
+      this.cloneButton.setCallback(this.cloneToMachine);
+      this.cloneButton.unsetClass("small-blue");
+      return this.cloneButton.setClass("cupid-green");
+    } else if (this.state === CLONING) {
+      this.cloneButton.disable();
+      return this.cloneButton.setTitle("Cloning...");
+    }
+  };
+
+  RepoView.prototype.writeInstalled = function(path) {
+    var directoryExists;
+    if (!directoryExists) {
+      this.kiteController.run({
+        command: "mkdir ~/.gitdashboard; echo \"\" > repodata"
+      });
+      directoryExists = true;
+    }
+    return this.kiteController.run({
+      command: "echo \"" + this.getOptions.name + " " + path + "\" >> repodata"
+    });
+  };
+
   return RepoView;
 
 })(KDListItemView);
-/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/views/boxedlistview.coffee */
-var BoxedListView,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-BoxedListView = (function(_super) {
-  __extends(BoxedListView, _super);
-
-  function BoxedListView(options, data) {
-    if (options == null) {
-      options = {};
-    }
-    options.header || (options.header = "Dummy Header");
-    options.seeMoreCallback || (options.seeMoreCallback = void 0);
-    options.cssClass = KD.utils.curry("boxedlist-container", options.cssClass);
-    BoxedListView.__super__.constructor.call(this, options, data);
-  }
-
-  BoxedListView.prototype.viewAppended = function() {
-    var header, seeMoreCallback, _ref;
-    _ref = this.getOptions(), header = _ref.header, seeMoreCallback = _ref.seeMoreCallback;
-    this.addSubView(new KDHeaderView({
-      title: header,
-      type: "big",
-      cssClass: "box-header"
-    }));
-    this.addSubView(this.list = new KDListView({
-      cssClass: "list"
-    }));
-    return this.addSubView(this.seeMoreButton = new KDButtonView({
-      title: "See more",
-      callback: seeMoreCallback,
-      cssClass: "seemore-button"
-    }));
-  };
-
-  BoxedListView.prototype.addRepo = function(repoView) {
-    return this.list.addItemView(repoView);
-  };
-
-  return BoxedListView;
-
-})(KDView);
 /* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/controller/repodatacontroller.coffee */
 var RepoDataController,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
@@ -1893,6 +1929,14 @@ RepoDataController = (function(_super) {
     RepoDataController.__super__.constructor.call(this, options, data);
     this.kiteHelper = options.kiteHelper;
     this.registerSingleton("trendingPageController", this, true);
+    this.kiteHelper.getKite().then((function(_this) {
+      return function(kite) {
+        return kite.fsExists("~/.gitdashboard").then(function(exists) {
+          var directoryExists;
+          return directoryExists = exists;
+        });
+      };
+    })(this));
   }
 
   RepoDataController.prototype.getTrendingRepos = function(callback) {
@@ -2084,7 +2128,8 @@ GitDashboardMainView = (function(_super) {
       callback: this.oauthAuthentication
     }));
     this.addSubView(this.tabView = new KDTabView({
-      cssClass: "tab-view"
+      cssClass: "tab-view",
+      hideHandleCloseIcons: true
     }));
     this.tabView.getTabHandleContainer().setClass("handle-container");
     this.tabView.addPane(this.trendingPagePane = new KDTabPaneView({
@@ -2101,6 +2146,7 @@ GitDashboardMainView = (function(_super) {
     this.addSubView(this.vmSelector = new VMSelectorView({
       callback: this.switchVm,
       kiteHelper: this.kiteHelper,
+      container: this,
       cssClass: "vm-selector"
     }));
     if (OAuth.create("github") === !false) {

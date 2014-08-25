@@ -14,7 +14,7 @@ class GitDashboardMainView extends KDView
             
         @addSubView @tabView = new KDTabView
             cssClass:"tab-view"
-            
+            hideHandleCloseIcons: yes
         @tabView.getTabHandleContainer().setClass "handle-container"
         
         @tabView.addPane @trendingPagePane = new KDTabPaneView
@@ -28,6 +28,7 @@ class GitDashboardMainView extends KDView
         @addSubView @vmSelector = new VMSelectorView
             callback: @switchVm
             kiteHelper: @kiteHelper
+            container: @
             cssClass: "vm-selector"
 
         if OAuth.create("github") is not false

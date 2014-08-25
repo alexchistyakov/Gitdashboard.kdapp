@@ -7,6 +7,9 @@ class RepoDataController extends KDController
         super options, data
         @kiteHelper = options.kiteHelper
         @registerSingleton "trendingPageController", this, yes
+        @kiteHelper.getKite().then (kite) =>
+            kite.fsExists("~/.gitdashboard").then (exists) =>
+                directoryExists = exists
         
     getTrendingRepos:(callback)->
         @appStorage.fetchStorage =>

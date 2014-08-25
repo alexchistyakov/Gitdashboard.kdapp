@@ -21,7 +21,6 @@
           "./views/vmselector.coffee",
           "./modal/clonemodal.coffee",
           "./views/repoview.coffee",
-          "./views/boxedlistview.coffee",
           "./controller/repodatacontroller.coffee",
           "./views/trendingpageview.coffee",
           "./views/myrepospageview.coffee",
