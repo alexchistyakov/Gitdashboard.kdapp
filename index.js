@@ -1,4 +1,4 @@
-/* Compiled by kdc on Mon Aug 25 2014 21:31:40 GMT+0000 (UTC) */
+/* Compiled by kdc on Tue Aug 26 2014 06:30:29 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1222,9 +1222,9 @@ module.exports = function(document) {
 };
 
 },{}]},{},[4])/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
-var CLONED, CLONING, NOT_CLONED, directoryExists, maxSymbolsInDescription, oauthKey, reposInTrending, reposPerTopic, searchKeywords, _ref;
+var CLONED, CLONING, LOADING, NOT_CLONED, dataPath, maxSymbolsInDescription, oauthKey, reposInTrending, reposPerTopic, root, searchKeywords, _ref;
 
-_ref = [0, 1, 2], NOT_CLONED = _ref[0], CLONING = _ref[1], CLONED = _ref[2];
+_ref = [0, 1, 2], NOT_CLONED = _ref[0], CLONING = _ref[1], CLONED = _ref[2], LOADING = _ref[3];
 
 searchKeywords = ["3D Modeling", "Data Visualization", "Game Engines", "Software Development tools", "Design Essentials", "Package Manager", "CSS Preprocessors"];
 
@@ -1234,9 +1234,13 @@ reposPerTopic = 10;
 
 maxSymbolsInDescription = 100;
 
-directoryExists = false;
+dataPath = "~/.gitdashboard/repodata";
 
 oauthKey = "D6R6uhEmh7kmXCVT9YzSwvHP-tk";
+
+root = typeof exports !== "undefined" && exports !== null ? exports : this;
+
+root.directoryExists = false;
 /* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
 var KiteHelper,
   __hasProp = {}.hasOwnProperty,
@@ -1502,7 +1506,6 @@ VMSelectorView = (function(_super) {
     }));
     this.kiteHelper.ready((function(_this) {
       return function() {
-        console.log("Ready");
         _this.addSubView(_this.header = new KDCustomHTMLView({
           tagName: 'div',
           cssClass: 'header',
@@ -1530,7 +1533,6 @@ VMSelectorView = (function(_super) {
     var vmController;
     this.selection.updatePartial("");
     vmController = KD.singletons.vmController;
-    console.log("Iteration begin");
     return this.kiteHelper.getVms().forEach((function(_this) {
       return function(vm) {
         var vmItem;
@@ -1543,26 +1545,21 @@ VMSelectorView = (function(_super) {
             }
           }
         }));
-        console.log("View added");
         if (vm.hostnameAlias === _this.kiteHelper.getVm()) {
           vmItem.setClass("active");
         }
-        console.log("Active checked");
         vmItem.addSubView(new KDCustomHTMLView({
           tagName: 'span',
           cssClass: "bubble"
         }));
-        console.log("Active checked 1");
         vmItem.addSubView(new KDCustomHTMLView({
           tagName: 'span',
           cssClass: "name",
           partial: _this.namify(vm.hostnameAlias)
         }));
-        console.log("Active checked 2");
-        vmController.info(vm.hostnameAlias, function(err, vmn, info) {
+        return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
           return vmItem.setClass(info != null ? info.state.toLowerCase() : void 0);
         });
-        return console.log("VM is loaded");
       };
     })(this));
   };
@@ -1740,16 +1737,15 @@ GitdashboardCloneModal = (function(_super) {
     }, (function(_this) {
       return function(err, res) {
         if ((err != null) || res.exitStatus === !0) {
-          new KDModalView({
+          return new KDModalView({
             title: "Error",
             view: new KDView({
-              partial: res.stderr
+              partial: err
             })
           });
         } else {
-
+          return _this.repoView.writeInstalled(fullPath);
         }
-        return _this.repoView.updateState();
       };
     })(this));
   };
@@ -1782,7 +1778,7 @@ RepoView = (function(_super) {
       options = {};
     }
     this.writeInstalled = __bind(this.writeInstalled, this);
-    this.upadateView = __bind(this.upadateView, this);
+    this.updateView = __bind(this.updateView, this);
     this.updateState = __bind(this.updateState, this);
     this.cloneToMachine = __bind(this.cloneToMachine, this);
     options.name || (options.name = "Dummy Name");
@@ -1796,7 +1792,8 @@ RepoView = (function(_super) {
     options.url || (options.url = "");
     this.kiteHelper = options.kiteHelper;
     this.state = NOT_CLONED;
-    this.updateState();
+    this.openDir = "/";
+    this.controller = options.controller;
     if (options.description.length > maxSymbolsInDescription) {
       options.description = options.description.substring(0, maxSymbolsInDescription) + "...";
     } else {
@@ -1836,7 +1833,10 @@ RepoView = (function(_super) {
       cssClass: "description",
       partial: description
     }));
-    return this.addSubView(this.cloneButton = new KDButtonView);
+    this.addSubView(this.cloneButton = new KDButtonView);
+    this.state = LOADING;
+    this.updateView();
+    return this.updateState();
   };
 
   RepoView.prototype.cloneToMachine = function() {
@@ -1854,53 +1854,74 @@ RepoView = (function(_super) {
   };
 
   RepoView.prototype.updateState = function() {
-    if (!exists) {
-      this.state = NOT_CLONED;
+    if (!root.directoryExists) {
+      return this.state = NOT_CLONED;
     } else {
-      this.kiteHelper.run({
-        command: "cd ~/.gitdashboard; cat repodata | grep " + this.getOptions().name
+      return this.kiteHelper.run({
+        command: ("cat " + dataPath + " | grep ") + this.getOptions().name + ""
       }, (function(_this) {
         return function(err, res) {
-          if (!res.stdout) {
-            return _this.state = NOT_CLONED;
+          console.log(res);
+          if (res.exitStatus === 0) {
+            _this.openDir = res.stdout.substring(res.stdout.indexOf("/"));
+            _this.kiteHelper.run({
+              command: "test -d " + _this.openDir + "/.git"
+            }, function(err, res) {
+              if (res.exitStatus === 0) {
+                return _this.state = CLONED;
+              } else {
+                return _this.kiteHelper.run({
+                  command: "sed /" + _this.openDir + "/d " + dataPath
+                });
+              }
+            });
           } else {
-            return _this.state = CLONED;
+            _this.state = NOT_CLONED;
           }
+          return _this.updateView();
         };
       })(this));
     }
-    return this.updateView();
   };
 
-  RepoView.prototype.upadateView = function() {
+  RepoView.prototype.updateView = function() {
+    this.cloneButton.enable();
+    this.cloneButton.unsetClass("small-blue");
+    this.cloneButton.unsetClass("cupid-green");
+    this.cloneButton.unsetClass("clean-gray");
+    this.cloneButton.setCallback(void 0);
+    this.cloneButton.hideLoader();
     if (this.state === CLONED) {
-      this.cloneButton.enable();
-      this.cloneButton.unsetClass("cupid-green");
       this.cloneButton.setClass("small-blue");
-      return this.cloneButton.setTitle("Open");
+      this.cloneButton.setTitle("Open");
+      return this.cloneButton.setCallback((function(_this) {
+        return function() {
+          return _this.controller.createTab(_this);
+        };
+      })(this));
     } else if (this.state === NOT_CLONED) {
-      this.cloneButton.enable();
       this.cloneButton.setTitle("Clone");
       this.cloneButton.setCallback(this.cloneToMachine);
-      this.cloneButton.unsetClass("small-blue");
       return this.cloneButton.setClass("cupid-green");
     } else if (this.state === CLONING) {
       this.cloneButton.disable();
+      this.cloneButton.setClass("clean-gray");
       return this.cloneButton.setTitle("Cloning...");
+    } else if (this.state === LOADING) {
+      this.cloneButton.setClass("clean-gray");
+      this.cloneButton.showLoader();
+      return this.cloneButton.setTitle("Loading");
     }
   };
 
   RepoView.prototype.writeInstalled = function(path) {
-    var directoryExists;
-    if (!directoryExists) {
-      this.kiteController.run({
-        command: "mkdir ~/.gitdashboard; echo \"\" > repodata"
-      });
-      directoryExists = true;
-    }
-    return this.kiteController.run({
-      command: "echo \"" + this.getOptions.name + " " + path + "\" >> repodata"
-    });
+    return this.kiteHelper.run({
+      command: "echo " + (this.getOptions().name) + " " + path + " >> " + dataPath
+    }, (function(_this) {
+      return function(err, res) {
+        return _this.updateState();
+      };
+    })(this));
   };
 
   return RepoView;
@@ -1920,7 +1941,8 @@ RepoDataController = (function(_super) {
     if (options == null) {
       options = {};
     }
-    this.getMyRepos = __bind(this.getMyRepos, this);
+    this.createTab = __bind(this.createTab, this);
+    this.appendExtras = __bind(this.appendExtras, this);
     this.appStorage = KD.getSingleton('appStorageController').storage('Gitdashboard', '0.1');
     trendingPageController = KD.singletons.trendingPageController;
     if (trendingPageController) {
@@ -1931,9 +1953,11 @@ RepoDataController = (function(_super) {
     this.registerSingleton("trendingPageController", this, true);
     this.kiteHelper.getKite().then((function(_this) {
       return function(kite) {
-        return kite.fsExists("~/.gitdashboard").then(function(exists) {
-          var directoryExists;
-          return directoryExists = exists;
+        return kite.fsExists({
+          path: dataPath
+        }).then(function(exists) {
+          root.directoryExists = exists;
+          return _this.emit("path-checked");
         });
       };
     })(this));
@@ -1961,7 +1985,7 @@ RepoDataController = (function(_super) {
           console.log(repos);
           for (_i = 0, _len = repos.length; _i < _len; _i++) {
             repoO = repos[_i];
-            repoO["kiteHelper"] = _this.kiteHelper;
+            _this.appendExtras(repoO);
             callback(new RepoView(repoO));
           }
           return _this.appStorage.setValue("repos", JSON.stringify(repos));
@@ -1973,7 +1997,7 @@ RepoDataController = (function(_super) {
           _results = [];
           for (_i = 0, _len = options.length; _i < _len; _i++) {
             option = options[_i];
-            option["kiteHelper"] = _this.kiteHelper;
+            _this.appendExtras(option);
             _results.push(callback(new RepoView(option)));
           }
           return _results;
@@ -1985,12 +2009,12 @@ RepoDataController = (function(_super) {
   RepoDataController.prototype.getMyRepos = function(callback, authToken) {
     return authToken.get("/user/repos").done((function(_this) {
       return function(response) {
-        var repo, _i, _len, _results;
+        var options, repo, _i, _len, _results;
         _results = [];
         for (_i = 0, _len = response.length; _i < _len; _i++) {
           repo = response[_i];
-          repo["kiteHelper"] = _this.kiteHelper;
-          _results.push(callback(new RepoView(_this.generateOptions(repo))));
+          options = _this.appendExtras(_this.generateOptions(repo));
+          _results.push(callback(new RepoView(options)));
         }
         return _results;
       };
@@ -2022,6 +2046,16 @@ RepoDataController = (function(_super) {
     };
   };
 
+  RepoDataController.prototype.appendExtras = function(list) {
+    list["kiteHelper"] = this.kiteHelper;
+    list["controller"] = this;
+    return list;
+  };
+
+  RepoDataController.prototype.createTab = function(repoView) {
+    return this.emit("tab-open-request", repoView);
+  };
+
   return RepoDataController;
 
 })(KDController);
@@ -2039,15 +2073,24 @@ GitDashboardTrendingPageView = (function(_super) {
       options = {};
     }
     this.repoReceived = __bind(this.repoReceived, this);
+    this.beginLoad = __bind(this.beginLoad, this);
     this.controller = options.dataController;
     options.cssClass = 'Gitdashboard';
     GitDashboardTrendingPageView.__super__.constructor.call(this, options, data);
+    this.controller.on("path-checked", this.bound("beginLoad"));
   }
 
   GitDashboardTrendingPageView.prototype.viewAppended = function() {
     this.addSubView(this.container = new KDListView({
       cssClass: "container"
     }));
+    return this.addSubView(new KDLoaderView({
+      showLoader: true
+    }));
+  };
+
+  GitDashboardTrendingPageView.prototype.beginLoad = function() {
+    this.container.empty();
     return this.controller.getTrendingRepos(this.repoReceived);
   };
 
@@ -2108,6 +2151,7 @@ GitDashboardMainView = (function(_super) {
     if (options == null) {
       options = {};
     }
+    this.openConsoleTab = __bind(this.openConsoleTab, this);
     this.switchVm = __bind(this.switchVm, this);
     this.initPersonal = __bind(this.initPersonal, this);
     this.oauthAuthentication = __bind(this.oauthAuthentication, this);
@@ -2118,6 +2162,7 @@ GitDashboardMainView = (function(_super) {
     this.controller = new RepoDataController({
       kiteHelper: this.kiteHelper
     });
+    this.controller.on("tab-open-request", this.bound("openConsoleTab"));
   }
 
   GitDashboardMainView.prototype.viewAppended = function() {
@@ -2186,6 +2231,22 @@ GitDashboardMainView = (function(_super) {
     })(this))["catch"]((function(_this) {
       return function(err) {
         return _this.vmSelector.turnOffVmModal(vm);
+      };
+    })(this));
+  };
+
+  GitDashboardMainView.prototype.openConsoleTab = function(repoView) {
+    return KD.singletons.appManager.require('Terminal', (function(_this) {
+      return function() {
+        _this.tabView.addPane(_this.terminalPaneTab = new KDTabPaneView({
+          title: repoView.getOptions().name,
+          cssClass: "terminal-pane",
+          closeable: true
+        }));
+        _this.terminalPaneTab.setMainView(_this.terminal = new TerminalPane({
+          cssClass: "terminal"
+        }));
+        return _this.terminal.runCommand("cd " + repoView.openDir);
       };
     })(this));
   };

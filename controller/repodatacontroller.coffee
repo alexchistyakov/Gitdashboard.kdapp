@@ -8,8 +8,9 @@ class RepoDataController extends KDController
         @kiteHelper = options.kiteHelper
         @registerSingleton "trendingPageController", this, yes
         @kiteHelper.getKite().then (kite) =>
-            kite.fsExists("~/.gitdashboard").then (exists) =>
-                directoryExists = exists
+            kite.fsExists(path:dataPath).then (exists) =>
+                root.directoryExists = exists
+                @emit "path-checked"
         
     getTrendingRepos:(callback)->
         @appStorage.fetchStorage =>
@@ -22,7 +23,7 @@ class RepoDataController extends KDController
                 repos = @formatResults(results)
                 console.log repos
                 for repoO in repos
-                    repoO["kiteHelper"] = @kiteHelper
+                    @appendExtras(repoO)
                     callback(new RepoView repoO)
                 @appStorage.setValue "repos" , JSON.stringify repos
             .catch (err) =>
@@ -30,15 +31,15 @@ class RepoDataController extends KDController
                 console.log "Block"
                 options = JSON.parse Encoder.htmlDecode @appStorage.getValue("repos")
                 for option in options
-                    option["kiteHelper"] = @kiteHelper
+                    @appendExtras(option)
                     callback(new RepoView option)
         ,true
-    getMyRepos:(callback,authToken)=>
+    getMyRepos:(callback,authToken)->
         authToken.get("/user/repos")
         .done (response) =>
             for repo in response
-                repo["kiteHelper"] = @kiteHelper
-                callback(new RepoView @generateOptions(repo))
+                options = @appendExtras @generateOptions repo
+                callback(new RepoView options)
         .fail (err) ->
             console.log err
     formatResults: (results) ->
@@ -58,4 +59,9 @@ class RepoDataController extends KDController
             language: item.language
             url: item.html_url
         }
-        
+    appendExtras: (list) =>
+        list["kiteHelper"] = @kiteHelper
+        list["controller"] = @
+        return list
+    createTab: (repoView) =>
+        @emit "tab-open-request",repoView

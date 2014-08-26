@@ -49,10 +49,9 @@ class GitdashboardCloneModal extends KDModalView
             new KDModalView
                 title: "Error"
                 view: new KDView
-                    partial: res.stderr
+                    partial: err
         else 
-            
-        @repoView.updateState()
+            @repoView.writeInstalled(fullPath)
   unmountAll: =>
     @finderController.unmountVm vmR.vmName for vmR in @finderController.vms
     

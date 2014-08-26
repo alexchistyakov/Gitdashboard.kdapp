@@ -1,4 +1,5 @@
 class GitDashboardMyReposPageView extends KDView
+
   constructor:(options = {}, data)->
     @controller = options.dataController
     @authToken = options.authToken
@@ -11,5 +12,6 @@ class GitDashboardMyReposPageView extends KDView
     @addSubView @container = new KDListView
         cssClass:"container"
     @controller.getMyRepos @repoReceived,@authToken
+    
   repoReceived: (repoView) =>
     @container.addSubView repoView

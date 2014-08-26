@@ -11,12 +11,12 @@ class RepoView extends KDListItemView
         options.url         or= ""
         @kiteHelper           = options.kiteHelper
         @state                = NOT_CLONED
-        @updateState()
+        @openDir              = "/"
+        @controller           = options.controller
         if options.description.length > maxSymbolsInDescription
             options.description = options.description.substring(0,maxSymbolsInDescription)+"..."
         else
             options.description
-
         super options,data
     viewAppended: ->
         {user,name,description,authorGravatarUrl,stars,language} = @getOptions()
@@ -48,7 +48,9 @@ class RepoView extends KDListItemView
             partial: description
 
         @addSubView @cloneButton = new KDButtonView
-            
+        @state = LOADING
+        @updateView()
+        @updateState()
     cloneToMachine: =>
         new GitdashboardCloneModal
             repoView: @
@@ -60,36 +62,55 @@ class RepoView extends KDListItemView
         window.open url,"_blank"
         
     updateState: =>
-        if not exists
+        if not root.directoryExists
             @state = NOT_CLONED
         else
             @kiteHelper.run
-                command: "cd ~/.gitdashboard; cat repodata | grep "+@getOptions().name
-            , (err,res) =>
-                if not res.stdout
-                    @state = NOT_CLONED
+                command: "cat #{dataPath} | grep "+@getOptions().name+""
+            ,(err,res) =>
+                console.log res
+                if res.exitStatus is 0
+                    @openDir = res.stdout.substring res.stdout.indexOf "/"
+                    @kiteHelper.run 
+                        command: "test -d #{@openDir}/.git"
+                    , (err,res) =>
+                        if res.exitStatus is 0
+                            @state = CLONED
+                        else
+                            @kiteHelper.run 
+                                command: "sed /#{@openDir}/d #{dataPath}"
                 else
-                    @state = CLONED
-        @updateView()
-    upadateView: =>
+                    @state = NOT_CLONED
+                @updateView()
+    updateView: =>
+        @cloneButton.enable()
+        @cloneButton.unsetClass "small-blue"
+        @cloneButton.unsetClass "cupid-green"
+        @cloneButton.unsetClass "clean-gray"
+        @cloneButton.setCallback undefined
+        @cloneButton.hideLoader()
         if @state is CLONED
-            @cloneButton.enable()
-            @cloneButton.unsetClass "cupid-green"
             @cloneButton.setClass "small-blue"
             @cloneButton.setTitle "Open"
+            @cloneButton.setCallback =>
+                @controller.createTab @
         else if @state is NOT_CLONED
-            @cloneButton.enable()
             @cloneButton.setTitle "Clone"
             @cloneButton.setCallback @cloneToMachine
-            @cloneButton.unsetClass "small-blue"
             @cloneButton.setClass "cupid-green"
         else if @state is CLONING
             @cloneButton.disable()
+            @cloneButton.setClass "clean-gray"
             @cloneButton.setTitle "Cloning..."
+        else if @state is LOADING
+            @cloneButton.setClass "clean-gray"
+            @cloneButton.showLoader()
+            @cloneButton.setTitle "Loading"
     writeInstalled: (path)=>
-        if not directoryExists
-            @kiteController.run
-                command: "mkdir ~/.gitdashboard; echo \"\" > repodata"
-            directoryExists = true
-        @kiteController.run
-            command: "echo \"#{@getOptions.name} #{path}\" >> repodata"
+        @kiteHelper.run
+            command: "echo #{@getOptions().name} #{path} >> #{dataPath}"
+        ,(err,res) =>
+            @updateState()
+            
+        
+    

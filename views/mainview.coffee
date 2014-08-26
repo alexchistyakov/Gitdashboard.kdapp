@@ -5,7 +5,7 @@ class GitDashboardMainView extends KDView
         @kiteHelper = new KiteHelper
         @controller = new RepoDataController
             kiteHelper: @kiteHelper
-
+        @controller.on "tab-open-request", @bound "openConsoleTab"
     viewAppended: =>
         @addSubView @loginButton = new KDButtonView
             cssClass: "login-button"
@@ -54,3 +54,12 @@ class GitDashboardMainView extends KDView
              delete @overlay
         .catch (err) => 
             @vmSelector.turnOffVmModal(vm)
+    openConsoleTab: (repoView) =>
+        KD.singletons.appManager.require 'Terminal', =>
+            @tabView.addPane @terminalPaneTab = new KDTabPaneView
+                title: repoView.getOptions().name
+                cssClass: "terminal-pane"
+                closeable: true
+            @terminalPaneTab.setMainView @terminal = new TerminalPane
+                cssClass: "terminal"
+            @terminal.runCommand "cd #{repoView.openDir}"

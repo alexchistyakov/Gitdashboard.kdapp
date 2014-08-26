@@ -42,6 +42,22 @@
   height: initial;
   overflow: visible;
 }
+
+.GitDashboard .terminal-pane {
+  height:100%;
+  width:100%;
+}
+.GitDashboard .terminal-pane .terminal {
+  background:#333;
+  height:100%;
+  width:100%;
+  text-align: left;
+  display: block;
+  -webkit-transition: height .3s ease-in;
+  -moz-transition: height .3s ease-in;
+  -o-transition: height .3s ease-in;
+  transition: height .3s ease-in;
+}
 .GitDashboard .vm-selector .header {
   color: #808080;
   text-align: center;
