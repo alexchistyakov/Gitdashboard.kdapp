@@ -113,7 +113,7 @@ class KiteHelper extends KDController
           else
             resolve kite
 
-  run:(options, callback)->
+  run_old:(options, callback)->
     @getKite().then (kite)->
       options.timeout ?= 10 * 60 * 1000
       kite.options.timeout = options.timeout
@@ -132,3 +132,9 @@ class KiteHelper extends KDController
           message : "Failed to run #{options.command}"
           details : err
       console.error err
+
+  run:(options)->
+    @getKite().then (kite)->
+      options.timeout ?= 10 * 60 * 1000
+      kite.options.timeout = options.timeout
+      kite.exec(options)
