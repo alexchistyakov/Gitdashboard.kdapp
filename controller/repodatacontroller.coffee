@@ -22,6 +22,12 @@ class RepoDataController extends KDController
                         .then =>
                             @emit "path-checked"
         
+    getSearchedRepos:(callback, topic)=>
+        link = encodeURI("https://api.github.com/search/repositories?q=#{topic}&sort=stars")
+        $.getJSON(link).then (json) =>
+            for i in [0...searchResultCount] when json.items[i]?
+              callback(@repoViewFromJson(json.items[i]))    
+    
     getTrendingRepos:(callback)->
         @appStorage.fetchStorage =>
             Promise.all(searchKeywords.map (topic) =>
@@ -45,6 +51,7 @@ class RepoDataController extends KDController
                         @appendExtras(option)
                         callback(new RepoView option)
                     @emit "trending-page-downloaded"
+
     getMyRepos:(callback,authToken)->
         authToken.get("/user/repos")
         .done (response) =>
@@ -53,6 +60,7 @@ class RepoDataController extends KDController
                 callback(new RepoView options)
         .fail (err) ->
             console.log err
+
     formatResults: (results) ->
         repos = flatten(results)
         repos = bubbleSort(repos)
@@ -123,4 +131,3 @@ class RepoDataController extends KDController
                 console.log data
                 @unlistRepository data, @getRepoDirectory data
             )
-                        
