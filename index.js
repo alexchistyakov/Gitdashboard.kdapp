@@ -1,4 +1,4 @@
-/* Compiled by kdc on Wed Aug 27 2014 00:31:25 GMT+0000 (UTC) */
+/* Compiled by kdc on Wed Aug 27 2014 20:06:31 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1417,7 +1417,7 @@ KiteHelper = (function(_super) {
     })(this));
   };
 
-  KiteHelper.prototype.run = function(options, callback) {
+  KiteHelper.prototype.run_old = function(options, callback) {
     return this.getKite().then(function(kite) {
       if (options.timeout == null) {
         options.timeout = 10 * 60 * 1000;
@@ -1444,6 +1444,16 @@ KiteHelper = (function(_super) {
         });
       }
       return console.error(err);
+    });
+  };
+
+  KiteHelper.prototype.run = function(options) {
+    return this.getKite().then(function(kite) {
+      if (options.timeout == null) {
+        options.timeout = 10 * 60 * 1000;
+      }
+      kite.options.timeout = options.timeout;
+      return kite.exec(options);
     });
   };
 
@@ -1736,9 +1746,9 @@ GitdashboardCloneModal = (function(_super) {
     return this.kiteHelper.run({
       command: "git clone " + this.cloneUrl + " " + fullPath,
       password: null
-    }, (function(_this) {
-      return function(err, res) {
-        if ((err != null) || res.exitStatus === !0) {
+    }).then((function(_this) {
+      return function(res) {
+        if (res.exitStatus === !0) {
           return new KDModalView({
             title: "Error",
             view: new KDView({
@@ -1905,7 +1915,7 @@ RepoView = (function(_super) {
   };
 
   RepoView.prototype.writeInstalled = function(path) {
-    return this.controller.listRepository(this.getOptions().name, path, (function(_this) {
+    return this.controller.listRepository(this.getOptions().name, path).then((function(_this) {
       return function() {
         return _this.updateState();
       };
@@ -1954,7 +1964,7 @@ RepoDataController = (function(_super) {
           root.directoryExists = exists;
           console.log(exists);
           if (exists) {
-            return _this.readRepoData(function(readData) {
+            return _this.readRepoData().then(function(readData) {
               var dataLine, i, _i, _len;
               data = readData.split("\n");
               for (_i = 0, _len = data.length; _i < _len; _i++) {
@@ -1963,7 +1973,7 @@ RepoDataController = (function(_super) {
                 root.repodata[dataLine.substring(0, i)] = dataLine.substring(i + 1);
               }
               console.log(repodata);
-              return _this.verifyList(root.repodata, function() {
+              return _this.verifyList(root.repodata).then(function() {
                 return _this.emit("path-checked");
               });
             });
@@ -2068,14 +2078,12 @@ RepoDataController = (function(_super) {
     return this.emit("tab-open-request", repoView);
   };
 
-  RepoDataController.prototype.readRepoData = function(callback) {
+  RepoDataController.prototype.readRepoData = function() {
     return this.kiteHelper.run({
       command: "cat " + dataPath
-    }, (function(_this) {
-      return function(err, res) {
-        if (!err && res) {
-          return callback(res.stdout);
-        }
+    }).then((function(_this) {
+      return function(res) {
+        return res.stdout;
       };
     })(this));
   };
@@ -2089,48 +2097,37 @@ RepoDataController = (function(_super) {
     }
   };
 
-  RepoDataController.prototype.gitPresentInRepoFolder = function(dir, callback) {
+  RepoDataController.prototype.gitPresentInRepoFolder = function(dir) {
     console.log(dir);
     return this.kiteHelper.run({
       command: "test -d " + dir + "/.git"
-    }, (function(_this) {
-      return function(err, res) {
-        console.log(">>>>>>>>>" + res.exitStatus);
-        if (!err && res) {
-          return callback(res.exitStatus === 0);
-        }
+    }).then((function(_this) {
+      return function(res) {
+        return res.exitStatus === 0;
       };
     })(this));
   };
 
-  RepoDataController.prototype.unlistRepository = function(name, path, callback) {
+  RepoDataController.prototype.unlistRepository = function(name, path) {
     if (root.repodata[name] != null) {
       delete root.repodata[name];
       return this.kiteHelper.run({
         command: "sed /" + path + "/d " + dataPath + " > " + dataPath
-      }, (function(_this) {
-        return function(err, res) {
-          if (!err && res) {
-            if (callback != null) {
-              return callback(res.exitStatus === 0);
-            }
-          }
+      }).then((function(_this) {
+        return function(res) {
+          return res.exitStatus === 0;
         };
       })(this));
     }
   };
 
-  RepoDataController.prototype.listRepository = function(name, path, callback) {
+  RepoDataController.prototype.listRepository = function(name, path) {
     root.repodata[name] = path;
     return this.kiteHelper.run({
       command: "echo " + name + " " + path + " >> " + dataPath
-    }, (function(_this) {
-      return function(err, res) {
-        if (!err && res) {
-          if (callback != null) {
-            return callback(res.exitStatus === 0);
-          }
-        }
+    }).then((function(_this) {
+      return function(res) {
+        return res.exitStatus === 0;
       };
     })(this));
   };
@@ -2139,32 +2136,27 @@ RepoDataController = (function(_super) {
     return root.repodata[name];
   };
 
-  RepoDataController.prototype.verifyList = function(list, callback) {
-    var key, keys, _i, _len;
-    keys = [];
-    for (_i = 0, _len = list.length; _i < _len; _i++) {
-      key = list[_i];
-      if (list.isOwnProperty(key)) {
-        keys.push(key);
-      }
-    }
+  RepoDataController.prototype.verifyList = function(list) {
+    var keys;
+    keys = Object.keys(list);
     return Promise.all(keys.map((function(_this) {
       return function(key) {
-        return console.log(_this.gitPresentInRepoFolder(list[key], function(present) {
+        return _this.gitPresentInRepoFolder(list[key]).then(function(present) {
           console.log(list[key] + " " + present);
           if (!present) {
             return key;
           }
-        }));
+        });
       };
     })(this))).then((function(_this) {
       return function(results) {
         console.log(results);
+        results = results.filter(Boolean);
         return Promise.all(results.map(function(data) {
-          return _this.unlistRepository(data, _this.getDirectory(data));
-        })).then(function() {
-          return callback();
-        });
+          console.log("Removing");
+          console.log(data);
+          return _this.unlistRepository(data, _this.getRepoDirectory(data));
+        }));
       };
     })(this));
   };

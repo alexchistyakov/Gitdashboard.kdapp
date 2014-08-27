@@ -12,13 +12,14 @@ class RepoDataController extends KDController
                 root.directoryExists = exists
                 console.log exists
                 if exists
-                    @readRepoData (readData)=>
+                    @readRepoData().then (readData) =>
                         data = readData.split "\n"
                         for dataLine in data
                             i = dataLine.indexOf " "
                             root.repodata[dataLine.substring 0,i] = dataLine.substring i+1
                         console.log repodata
-                        @verifyList root.repodata, =>
+                        @verifyList root.repodata
+                        .then =>
                             @emit "path-checked"
         
     getTrendingRepos:(callback)->
@@ -76,12 +77,10 @@ class RepoDataController extends KDController
     createTab: (repoView) =>
         @emit "tab-open-request",repoView
     
-    readRepoData:(callback) =>
+    readRepoData: =>
         @kiteHelper.run
             command: "cat #{dataPath}"
-        , (err,res) =>
-            if not err and res
-                callback(res.stdout)
+        .then (res) => res.stdout
     
     repositoryIsListed: (name) =>
         console.log root.repodata
@@ -89,45 +88,39 @@ class RepoDataController extends KDController
             return true
         else 
             return false
-    gitPresentInRepoFolder: (dir,callback) =>
+    gitPresentInRepoFolder: (dir) =>
         console.log dir
         @kiteHelper.run 
             command: "test -d #{dir}/.git"
-        ,(err,res) =>
-            console.log ">>>>>>>>>"+res.exitStatus
-            if not err and res
-                callback(res.exitStatus is 0)
-    unlistRepository: (name,path,callback) =>
+        .then (res) => res.exitStatus is 0
+    unlistRepository: (name,path) =>
         if root.repodata[name]?
             delete root.repodata[name]
             @kiteHelper.run 
                 command: "sed /#{path}/d #{dataPath} > #{dataPath}"
-            , (err,res) =>
-                if not err and res
-                    callback res.exitStatus is 0 if callback?
-    listRepository: (name,path,callback) =>
+            .then (res) => res.exitStatus is 0
+                    
+    listRepository: (name,path) =>
         root.repodata[name] = path
         @kiteHelper.run
             command: "echo #{name} #{path} >> #{dataPath}"
-        , (err,res) =>
-            if not err and res
-                callback res.exitStatus is 0 if callback?
+        .then (res) => res.exitStatus is 0
     getRepoDirectory: (name) =>
         root.repodata[name]
-    verifyList: (list,callback) =>
-        keys = []
-        for key in list
-            if list.isOwnProperty key
-                keys.push key
+    verifyList: (list) =>
+        keys = Object.keys(list)
         Promise.all( keys.map (key)=>
-            console.log @gitPresentInRepoFolder list[key], (present) =>
+            @gitPresentInRepoFolder list[key]
+            .then (present) =>
                 console.log list[key]+" "+present
                 if not present
                     key
         ).then (results) =>
             console.log results
+            results = results.filter(Boolean)
             Promise.all( results.map (data) =>
-                return @unlistRepository data, @getDirectory data
-            ).then =>
-                callback()
+                console.log "Removing"
+                console.log data
+                @unlistRepository data, @getRepoDirectory data
+            )
                         
