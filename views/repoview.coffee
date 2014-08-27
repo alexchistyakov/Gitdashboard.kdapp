@@ -102,7 +102,7 @@ class RepoView extends KDListItemView
     
     writeInstalled: (path)=>
         @controller.listRepository @getOptions().name, path
-        , =>
+        .then =>
             @updateState()
             
         
