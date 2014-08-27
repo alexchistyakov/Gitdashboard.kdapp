@@ -10,3 +10,4 @@ oauthKey = "D6R6uhEmh7kmXCVT9YzSwvHP-tk"
 #A little fix for CoffeeScripts scoping problems
 root = exports ? this
 root.directoryExists = false
+root.repodata = {}

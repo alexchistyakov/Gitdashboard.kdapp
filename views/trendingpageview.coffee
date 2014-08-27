@@ -5,14 +5,16 @@ class GitDashboardTrendingPageView extends KDView
     options.cssClass = 'Gitdashboard'
     super options, data
     @controller.on "path-checked",@bound "beginLoad"
-
+    @controller.on "trending-page-downloaded", @bound "hideLoader"
   viewAppended:->
     @addSubView @container = new KDListView
         cssClass:"container"
-    @addSubView new KDLoaderView
+    @addSubView @loader = new KDLoaderView
         showLoader: true
-  beginLoad: =>
-      @container.empty()
+  beginLoad: ->
+      console.log "POST PATH CHECKED"
       @controller.getTrendingRepos(@repoReceived)
   repoReceived: (repoView) =>
     @container.addSubView repoView
+  hideLoader: ->
+      @loader.hide()

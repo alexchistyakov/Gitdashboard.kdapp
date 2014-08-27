@@ -64,52 +64,45 @@ class RepoView extends KDListItemView
     updateState: =>
         if not root.directoryExists
             @state = NOT_CLONED
+            console.log @state
         else
-            @kiteHelper.run
-                command: "cat #{dataPath} | grep "+@getOptions().name+""
-            ,(err,res) =>
-                console.log res
-                if res.exitStatus is 0
-                    @openDir = res.stdout.substring res.stdout.indexOf "/"
-                    @kiteHelper.run 
-                        command: "test -d #{@openDir}/.git"
-                    , (err,res) =>
-                        if res.exitStatus is 0
-                            @state = CLONED
-                        else
-                            @kiteHelper.run 
-                                command: "sed /#{@openDir}/d #{dataPath}"
-                else
-                    @state = NOT_CLONED
-                @updateView()
+            {name} = @getOptions()
+            console.log @controller.repositoryIsListed(name)+" "+name
+            if @controller.repositoryIsListed name
+                @state = CLONED
+            else
+                @state = NOT_CLONED
+            @updateView()
     updateView: =>
         @cloneButton.enable()
-        @cloneButton.unsetClass "small-blue"
-        @cloneButton.unsetClass "cupid-green"
-        @cloneButton.unsetClass "clean-gray"
+        @cloneButton.unsetClass "state-cloned"
+        @cloneButton.unsetClass "state-uncloned"
+        @cloneButton.unsetClass "state-cloning"
+        @cloneButton.unsetClass "state-loading"
+        @cloneButton.setClass "clone-button"
         @cloneButton.setCallback undefined
         @cloneButton.hideLoader()
         if @state is CLONED
-            @cloneButton.setClass "small-blue"
+            @cloneButton.setClass "state-cloned"
             @cloneButton.setTitle "Open"
             @cloneButton.setCallback =>
                 @controller.createTab @
         else if @state is NOT_CLONED
             @cloneButton.setTitle "Clone"
             @cloneButton.setCallback @cloneToMachine
-            @cloneButton.setClass "cupid-green"
+            @cloneButton.setClass "state-uncloned"
         else if @state is CLONING
             @cloneButton.disable()
-            @cloneButton.setClass "clean-gray"
+            @cloneButton.setClass "state-cloning"
             @cloneButton.setTitle "Cloning..."
         else if @state is LOADING
-            @cloneButton.setClass "clean-gray"
+            @cloneButton.setClass "state-loading"
             @cloneButton.showLoader()
             @cloneButton.setTitle "Loading"
+    
     writeInstalled: (path)=>
-        @kiteHelper.run
-            command: "echo #{@getOptions().name} #{path} >> #{dataPath}"
-        ,(err,res) =>
+        @controller.listRepository @getOptions().name, path
+        , =>
             @updateState()
             
         

@@ -1,4 +1,4 @@
-/* Compiled by kdc on Tue Aug 26 2014 06:30:29 GMT+0000 (UTC) */
+/* Compiled by kdc on Wed Aug 27 2014 00:31:25 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1241,6 +1241,8 @@ oauthKey = "D6R6uhEmh7kmXCVT9YzSwvHP-tk";
 root = typeof exports !== "undefined" && exports !== null ? exports : this;
 
 root.directoryExists = false;
+
+root.repodata = {};
 /* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/utils/kiteHelper.coffee */
 var KiteHelper,
   __hasProp = {}.hasOwnProperty,
@@ -1854,45 +1856,33 @@ RepoView = (function(_super) {
   };
 
   RepoView.prototype.updateState = function() {
+    var name;
     if (!root.directoryExists) {
-      return this.state = NOT_CLONED;
+      this.state = NOT_CLONED;
+      return console.log(this.state);
     } else {
-      return this.kiteHelper.run({
-        command: ("cat " + dataPath + " | grep ") + this.getOptions().name + ""
-      }, (function(_this) {
-        return function(err, res) {
-          console.log(res);
-          if (res.exitStatus === 0) {
-            _this.openDir = res.stdout.substring(res.stdout.indexOf("/"));
-            _this.kiteHelper.run({
-              command: "test -d " + _this.openDir + "/.git"
-            }, function(err, res) {
-              if (res.exitStatus === 0) {
-                return _this.state = CLONED;
-              } else {
-                return _this.kiteHelper.run({
-                  command: "sed /" + _this.openDir + "/d " + dataPath
-                });
-              }
-            });
-          } else {
-            _this.state = NOT_CLONED;
-          }
-          return _this.updateView();
-        };
-      })(this));
+      name = this.getOptions().name;
+      console.log(this.controller.repositoryIsListed(name) + " " + name);
+      if (this.controller.repositoryIsListed(name)) {
+        this.state = CLONED;
+      } else {
+        this.state = NOT_CLONED;
+      }
+      return this.updateView();
     }
   };
 
   RepoView.prototype.updateView = function() {
     this.cloneButton.enable();
-    this.cloneButton.unsetClass("small-blue");
-    this.cloneButton.unsetClass("cupid-green");
-    this.cloneButton.unsetClass("clean-gray");
+    this.cloneButton.unsetClass("state-cloned");
+    this.cloneButton.unsetClass("state-uncloned");
+    this.cloneButton.unsetClass("state-cloning");
+    this.cloneButton.unsetClass("state-loading");
+    this.cloneButton.setClass("clone-button");
     this.cloneButton.setCallback(void 0);
     this.cloneButton.hideLoader();
     if (this.state === CLONED) {
-      this.cloneButton.setClass("small-blue");
+      this.cloneButton.setClass("state-cloned");
       this.cloneButton.setTitle("Open");
       return this.cloneButton.setCallback((function(_this) {
         return function() {
@@ -1902,23 +1892,21 @@ RepoView = (function(_super) {
     } else if (this.state === NOT_CLONED) {
       this.cloneButton.setTitle("Clone");
       this.cloneButton.setCallback(this.cloneToMachine);
-      return this.cloneButton.setClass("cupid-green");
+      return this.cloneButton.setClass("state-uncloned");
     } else if (this.state === CLONING) {
       this.cloneButton.disable();
-      this.cloneButton.setClass("clean-gray");
+      this.cloneButton.setClass("state-cloning");
       return this.cloneButton.setTitle("Cloning...");
     } else if (this.state === LOADING) {
-      this.cloneButton.setClass("clean-gray");
+      this.cloneButton.setClass("state-loading");
       this.cloneButton.showLoader();
       return this.cloneButton.setTitle("Loading");
     }
   };
 
   RepoView.prototype.writeInstalled = function(path) {
-    return this.kiteHelper.run({
-      command: "echo " + (this.getOptions().name) + " " + path + " >> " + dataPath
-    }, (function(_this) {
-      return function(err, res) {
+    return this.controller.listRepository(this.getOptions().name, path, (function(_this) {
+      return function() {
         return _this.updateState();
       };
     })(this));
@@ -1941,6 +1929,13 @@ RepoDataController = (function(_super) {
     if (options == null) {
       options = {};
     }
+    this.verifyList = __bind(this.verifyList, this);
+    this.getRepoDirectory = __bind(this.getRepoDirectory, this);
+    this.listRepository = __bind(this.listRepository, this);
+    this.unlistRepository = __bind(this.unlistRepository, this);
+    this.gitPresentInRepoFolder = __bind(this.gitPresentInRepoFolder, this);
+    this.repositoryIsListed = __bind(this.repositoryIsListed, this);
+    this.readRepoData = __bind(this.readRepoData, this);
     this.createTab = __bind(this.createTab, this);
     this.appendExtras = __bind(this.appendExtras, this);
     this.appStorage = KD.getSingleton('appStorageController').storage('Gitdashboard', '0.1');
@@ -1957,7 +1952,22 @@ RepoDataController = (function(_super) {
           path: dataPath
         }).then(function(exists) {
           root.directoryExists = exists;
-          return _this.emit("path-checked");
+          console.log(exists);
+          if (exists) {
+            return _this.readRepoData(function(readData) {
+              var dataLine, i, _i, _len;
+              data = readData.split("\n");
+              for (_i = 0, _len = data.length; _i < _len; _i++) {
+                dataLine = data[_i];
+                i = dataLine.indexOf(" ");
+                root.repodata[dataLine.substring(0, i)] = dataLine.substring(i + 1);
+              }
+              console.log(repodata);
+              return _this.verifyList(root.repodata, function() {
+                return _this.emit("path-checked");
+              });
+            });
+          }
         });
       };
     })(this));
@@ -1988,22 +1998,24 @@ RepoDataController = (function(_super) {
             _this.appendExtras(repoO);
             callback(new RepoView(repoO));
           }
-          return _this.appStorage.setValue("repos", JSON.stringify(repos));
+          _this.emit("trending-page-downloaded");
+          return KD.utils.defer(function() {
+            return _this.appStorage.setValue("repos", JSON.stringify(repos));
+          });
         })["catch"](function(err) {
-          var option, options, _i, _len, _results;
-          console.log("Throttle load");
-          console.log("Block");
-          options = JSON.parse(Encoder.htmlDecode(_this.appStorage.getValue("repos")));
-          _results = [];
-          for (_i = 0, _len = options.length; _i < _len; _i++) {
-            option = options[_i];
-            _this.appendExtras(option);
-            _results.push(callback(new RepoView(option)));
-          }
-          return _results;
+          return KD.utils.defer(function() {
+            var option, options, _i, _len;
+            options = JSON.parse(Encoder.htmlDecode(_this.appStorage.getValue("repos")));
+            for (_i = 0, _len = options.length; _i < _len; _i++) {
+              option = options[_i];
+              _this.appendExtras(option);
+              callback(new RepoView(option));
+            }
+            return _this.emit("trending-page-downloaded");
+          });
         });
       };
-    })(this), true);
+    })(this));
   };
 
   RepoDataController.prototype.getMyRepos = function(callback, authToken) {
@@ -2056,6 +2068,107 @@ RepoDataController = (function(_super) {
     return this.emit("tab-open-request", repoView);
   };
 
+  RepoDataController.prototype.readRepoData = function(callback) {
+    return this.kiteHelper.run({
+      command: "cat " + dataPath
+    }, (function(_this) {
+      return function(err, res) {
+        if (!err && res) {
+          return callback(res.stdout);
+        }
+      };
+    })(this));
+  };
+
+  RepoDataController.prototype.repositoryIsListed = function(name) {
+    console.log(root.repodata);
+    if (root.repodata[name] != null) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  RepoDataController.prototype.gitPresentInRepoFolder = function(dir, callback) {
+    console.log(dir);
+    return this.kiteHelper.run({
+      command: "test -d " + dir + "/.git"
+    }, (function(_this) {
+      return function(err, res) {
+        console.log(">>>>>>>>>" + res.exitStatus);
+        if (!err && res) {
+          return callback(res.exitStatus === 0);
+        }
+      };
+    })(this));
+  };
+
+  RepoDataController.prototype.unlistRepository = function(name, path, callback) {
+    if (root.repodata[name] != null) {
+      delete root.repodata[name];
+      return this.kiteHelper.run({
+        command: "sed /" + path + "/d " + dataPath + " > " + dataPath
+      }, (function(_this) {
+        return function(err, res) {
+          if (!err && res) {
+            if (callback != null) {
+              return callback(res.exitStatus === 0);
+            }
+          }
+        };
+      })(this));
+    }
+  };
+
+  RepoDataController.prototype.listRepository = function(name, path, callback) {
+    root.repodata[name] = path;
+    return this.kiteHelper.run({
+      command: "echo " + name + " " + path + " >> " + dataPath
+    }, (function(_this) {
+      return function(err, res) {
+        if (!err && res) {
+          if (callback != null) {
+            return callback(res.exitStatus === 0);
+          }
+        }
+      };
+    })(this));
+  };
+
+  RepoDataController.prototype.getRepoDirectory = function(name) {
+    return root.repodata[name];
+  };
+
+  RepoDataController.prototype.verifyList = function(list, callback) {
+    var key, keys, _i, _len;
+    keys = [];
+    for (_i = 0, _len = list.length; _i < _len; _i++) {
+      key = list[_i];
+      if (list.isOwnProperty(key)) {
+        keys.push(key);
+      }
+    }
+    return Promise.all(keys.map((function(_this) {
+      return function(key) {
+        return console.log(_this.gitPresentInRepoFolder(list[key], function(present) {
+          console.log(list[key] + " " + present);
+          if (!present) {
+            return key;
+          }
+        }));
+      };
+    })(this))).then((function(_this) {
+      return function(results) {
+        console.log(results);
+        return Promise.all(results.map(function(data) {
+          return _this.unlistRepository(data, _this.getDirectory(data));
+        })).then(function() {
+          return callback();
+        });
+      };
+    })(this));
+  };
+
   return RepoDataController;
 
 })(KDController);
@@ -2073,29 +2186,33 @@ GitDashboardTrendingPageView = (function(_super) {
       options = {};
     }
     this.repoReceived = __bind(this.repoReceived, this);
-    this.beginLoad = __bind(this.beginLoad, this);
     this.controller = options.dataController;
     options.cssClass = 'Gitdashboard';
     GitDashboardTrendingPageView.__super__.constructor.call(this, options, data);
     this.controller.on("path-checked", this.bound("beginLoad"));
+    this.controller.on("trending-page-downloaded", this.bound("hideLoader"));
   }
 
   GitDashboardTrendingPageView.prototype.viewAppended = function() {
     this.addSubView(this.container = new KDListView({
       cssClass: "container"
     }));
-    return this.addSubView(new KDLoaderView({
+    return this.addSubView(this.loader = new KDLoaderView({
       showLoader: true
     }));
   };
 
   GitDashboardTrendingPageView.prototype.beginLoad = function() {
-    this.container.empty();
+    console.log("POST PATH CHECKED");
     return this.controller.getTrendingRepos(this.repoReceived);
   };
 
   GitDashboardTrendingPageView.prototype.repoReceived = function(repoView) {
     return this.container.addSubView(repoView);
+  };
+
+  GitDashboardTrendingPageView.prototype.hideLoader = function() {
+    return this.loader.hide();
   };
 
   return GitDashboardTrendingPageView;
