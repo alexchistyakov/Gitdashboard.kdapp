@@ -44,8 +44,8 @@ class GitdashboardCloneModal extends KDModalView
     @kiteHelper.run
         command: "git clone "+@cloneUrl+" "+fullPath
         password: null
-    ,(err,res) =>
-        if err? or res.exitStatus is not 0
+    .then (res) =>
+        if res.exitStatus is not 0
             new KDModalView
                 title: "Error"
                 view: new KDView
