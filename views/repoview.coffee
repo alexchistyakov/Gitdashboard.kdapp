@@ -70,6 +70,7 @@ class RepoView extends KDListItemView
             console.log @controller.repositoryIsListed(name)+" "+name
             if @controller.repositoryIsListed name
                 @state = CLONED
+                @openDir = @controller.getRepoDirectory name
             else
                 @state = NOT_CLONED
             @updateView()

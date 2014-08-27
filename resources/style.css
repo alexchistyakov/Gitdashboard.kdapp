@@ -44,8 +44,9 @@
 }
 
 .GitDashboard .terminal-pane {
-  height:100%;
+  min-height:100%;
   width:100%;
+  background-color: #1B2224;
 }
 .GitDashboard .terminal-pane .terminal {
   background:#333;

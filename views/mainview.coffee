@@ -14,11 +14,11 @@ class GitDashboardMainView extends KDView
             
         @addSubView @tabView = new KDTabView
             cssClass:"tab-view"
-            hideHandleCloseIcons: yes
         @tabView.getTabHandleContainer().setClass "handle-container"
         
         @tabView.addPane @trendingPagePane = new KDTabPaneView
             title: "Trending"
+            closable: false
             
         @trendingPagePane.setMainView new GitDashboardTrendingPageView
             dataController: @controller
@@ -44,6 +44,7 @@ class GitDashboardMainView extends KDView
     initPersonal: =>
         @tabView.addPane @myReposPagePane = new KDTabPaneView
             title: "My Repos"
+            closable: false
         @myReposPagePane.setMainView new GitDashboardMyReposPageView
             authToken: OAuth.create("github")
             dataController: @controller
@@ -59,7 +60,10 @@ class GitDashboardMainView extends KDView
             @tabView.addPane @terminalPaneTab = new KDTabPaneView
                 title: repoView.getOptions().name
                 cssClass: "terminal-pane"
-                closeable: true
+                closable: true
             @terminalPaneTab.setMainView @terminal = new TerminalPane
                 cssClass: "terminal"
+            window.test = @terminal
+            $(window).trigger("resize")
+            @terminal.runCommand "clear"
             @terminal.runCommand "cd #{repoView.openDir}"

@@ -1,4 +1,4 @@
-/* Compiled by kdc on Wed Aug 27 2014 20:06:31 GMT+0000 (UTC) */
+/* Compiled by kdc on Wed Aug 27 2014 21:13:06 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1875,6 +1875,7 @@ RepoView = (function(_super) {
       console.log(this.controller.repositoryIsListed(name) + " " + name);
       if (this.controller.repositoryIsListed(name)) {
         this.state = CLONED;
+        this.openDir = this.controller.getRepoDirectory(name);
       } else {
         this.state = NOT_CLONED;
       }
@@ -2282,12 +2283,12 @@ GitDashboardMainView = (function(_super) {
       callback: this.oauthAuthentication
     }));
     this.addSubView(this.tabView = new KDTabView({
-      cssClass: "tab-view",
-      hideHandleCloseIcons: true
+      cssClass: "tab-view"
     }));
     this.tabView.getTabHandleContainer().setClass("handle-container");
     this.tabView.addPane(this.trendingPagePane = new KDTabPaneView({
-      title: "Trending"
+      title: "Trending",
+      closable: false
     }));
     this.trendingPagePane.setMainView(new GitDashboardTrendingPageView({
       dataController: this.controller
@@ -2322,7 +2323,8 @@ GitDashboardMainView = (function(_super) {
 
   GitDashboardMainView.prototype.initPersonal = function() {
     this.tabView.addPane(this.myReposPagePane = new KDTabPaneView({
-      title: "My Repos"
+      title: "My Repos",
+      closable: false
     }));
     this.myReposPagePane.setMainView(new GitDashboardMyReposPageView({
       authToken: OAuth.create("github"),
@@ -2350,11 +2352,14 @@ GitDashboardMainView = (function(_super) {
         _this.tabView.addPane(_this.terminalPaneTab = new KDTabPaneView({
           title: repoView.getOptions().name,
           cssClass: "terminal-pane",
-          closeable: true
+          closable: true
         }));
         _this.terminalPaneTab.setMainView(_this.terminal = new TerminalPane({
           cssClass: "terminal"
         }));
+        window.test = _this.terminal;
+        $(window).trigger("resize");
+        _this.terminal.runCommand("clear");
         return _this.terminal.runCommand("cd " + repoView.openDir);
       };
     })(this));
