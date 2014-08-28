@@ -3,7 +3,7 @@ class GitDashboardController extends AppController
   constructor:(options = {}, data)->
     options.view    = new GitDashboardMainView
     options.appInfo =
-      name : "Git Dashboard"
+      name : "Gitdashboard"
       type : "application"
 
     super options, data

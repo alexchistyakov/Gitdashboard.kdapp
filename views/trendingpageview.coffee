@@ -15,30 +15,12 @@ class GitDashboardTrendingPageView extends KDView
     @addSubView @loader = new KDLoaderView
         showLoader: true
         
-    @addSubView @searchBox = new KDInputView
-      cssClass: "searchBox"
-      placeholder: "Search..."
-
-    @searchBox.on 'keydown', (e) =>
-      if e.keyCode is 13
-        @container.empty()
-        @controller.getSearchedRepos(@repoReceived, @searchBox.getValue())
-        $(".returnToTrendingPageButton").animate(opacity: 1)
-
-    @addSubView @returnToTrendingPageButton = new KDButtonView
-      title: "Return to Trending Page"
-      cssClass: "returnToTrendingPageButton clean-gray"
-      callback: =>
-        $(".returnToTrendingPageButton").animate(opacity: 0)
-        @container.empty()
-        @controller.getTrendingRepos(@repoReceived)
-  
   beginLoad: ->
-      console.log "POST PATH CHECKED"
+      @loader.show()
       @controller.getTrendingRepos(@repoReceived)
   
   repoReceived: (repoView) =>
-    @container.addSubView repoView
+    @container.addItemView repoView
   
   hideLoader: ->
-      @loader.hide()
+    @loader.hide()

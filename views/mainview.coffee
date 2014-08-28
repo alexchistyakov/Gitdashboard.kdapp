@@ -3,8 +3,10 @@ class GitDashboardMainView extends KDView
         options.cssClass = 'GitDashboard'
         super options, data
         @kiteHelper = new KiteHelper
-        @controller = new RepoDataController
+        @dataManager = new RepoDataManager
             kiteHelper: @kiteHelper
+        @controller = new RepoDataController
+            dataManager: @dataManager
         @controller.on "tab-open-request", @bound "openConsoleTab"
     viewAppended: =>
         @addSubView @loginButton = new KDButtonView
@@ -19,10 +21,14 @@ class GitDashboardMainView extends KDView
         @tabView.addPane @trendingPagePane = new KDTabPaneView
             title: "Trending"
             closable: false
-            
+        @tabView.addPane @searchPagePane = new KDTabPaneView
+            title: "Search"
+            closable: false
+        @searchPagePane.setMainView new GitdashboardSearchPaneView
+            controller: @controller
         @trendingPagePane.setMainView new GitDashboardTrendingPageView
             dataController: @controller
-            
+        @tabView.showPane @trendingPagePane
         handle.setClass "handle" for handle in @tabView.handles
         
         @addSubView @vmSelector = new VMSelectorView
@@ -49,6 +55,55 @@ class GitDashboardMainView extends KDView
             authToken: OAuth.create("github")
             dataController: @controller
         @loginButton.hide()
+        @dataManager.checkSSHKeys().then (exist) =>
+            if not exist
+                container = new KDView
+                    partial: "No SSH keys were found on your VM. They are needed to clone private repositories. Would you like us to generate and add them for you?"
+                container.addSubView new KDButtonView
+                    title: "Sure"
+                    cssClass: "cupid-green"
+                    callback: =>
+                        modal.destroy()
+                        @dataManager.generateSSHKeys().then =>
+                            @dataManager.postSSHKey()
+                container.addSubView new KDButtonView
+                    title: "No thanks"
+                    cssClass: "small-gray"
+                    callback: =>
+                        modal.destroy()
+                modal = new KDModalView
+                    title: "SSH keys not found"
+                    overlay         : yes
+                    overlayClick    : no
+                    width           : 400
+                    height          : "auto"
+                    cssClass        : "new-kdmodal"
+                    view            : container
+            else
+                @dataManager.compareSSHKeys().then (item) =>
+                    if not item?
+                        container = new KDView
+                            partial: "Your SSH keys are not on GitHub. You will not be able to clone private repos. Would you like us to add them for you?"
+                        container.addSubView new KDButtonView
+                            title: "Sure"
+                            cssClass: "cupid-green"
+                            callback: =>
+                                modal.destroy()
+                                @dataManager.generateSSHKeys().then =>
+                                    @dataManager.postSSHKey()
+                        container.addSubView new KDButtonView
+                            title: "No thanks"
+                            cssClass: "small-gray"
+                            callback: =>
+                                modal.destroy()
+                        modal = new KDModalView
+                            title: "SSH keys not on GitHub"
+                            overlay         : yes
+                            overlayClick    : no
+                            width           : 400
+                            height          : "auto"
+                            cssClass        : "new-kdmodal"
+                            view            : container
     switchVm: (vm) =>
         @kiteHelper.getKite().then (kite) =>
              @overlay.remove()

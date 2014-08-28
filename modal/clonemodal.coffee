@@ -2,9 +2,8 @@ class GitdashboardCloneModal extends KDModalView
 
   constructor: (options = {}, data)->
     options.cssClass = "clone-modal"
-    @cloneUrl = options.cloneUrl
     @repoView = options.repoView
-    @kiteHelper = options.kiteHelper
+    @dataManager = options.dataManager
     
     @finderController = new NFinderController
         hideDotFiles:true
@@ -14,26 +13,24 @@ class GitdashboardCloneModal extends KDModalView
         contextMenu: false
         loadFilesOnInit: true
         
-    @kiteHelper.getKite().then (kite) =>
+    @dataManager.kiteHelper.getKite().then (kite) =>
         @unmountAll()
-        @finderController.mountVm @kiteHelper.getVmByName @kiteHelper.getVm()
+        @finderController.mountVm @dataManager.kiteHelper.getVmByName @dataManager.kiteHelper.getVm()
         @finderController.isNodesHiddenFor = -> true
     super options, data
     
   viewAppended:->
-    @kiteHelper.getReady().then =>
-        
-        @addSubView @nameInput = new KDInputView
-            placeholder: "Name"
+    @addSubView @nameInput = new KDInputView
+        placeholder: "Name"
 
-        @addSubView @finderController.getView()
+    @addSubView @finderController.getView()
 
-        @addSubView new KDButtonView
-            title: "Clone to my VM"
-            cssClass: "cupid-green"
-            callback: =>
-                unless @nameInput.getValue() is ""
-                    @beginClone()
+    @addSubView new KDButtonView
+        title: "Clone to my VM"
+        cssClass: "cupid-green"
+        callback: =>
+            unless @nameInput.getValue() is ""
+                @beginClone()
   beginClone: =>
     fullPath = @finderController.treeController.selectedNodes[0].data.path+"/"+@nameInput.getValue()
     fullPath = fullPath.substring fullPath.indexOf "/"
@@ -41,17 +38,12 @@ class GitdashboardCloneModal extends KDModalView
     @repoView.state = CLONING
     @repoView.updateView()
     @destroy()
-    @kiteHelper.run
-        command: "git clone "+@cloneUrl+" "+fullPath
-        password: null
-    .then (res) =>
-        if res.exitStatus is not 0
+    @dataManager.cloneRepo(@repoView.getOptions().cloneUrl, fullPath).then (cloned) =>
+        if not cloned
             new KDModalView
-                title: "Error"
-                view: new KDView
-                    partial: err
+                title: "Error occured while cloning"
         else 
             @repoView.writeInstalled(fullPath)
   unmountAll: =>
-    @finderController.unmountVm vmR.vmName for vmR in @finderController.vms
+    console.log @finderController.unmountVm vmR.hostnameAlias for vmR in @dataManager.kiteHelper._vms
     

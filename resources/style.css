@@ -173,17 +173,15 @@
   text-align:center;
 }
 
-.GitDashboard .searchBox {
-    height: 40px !important;
-    width: 600px !important;
+.GitDashboard .container .searchBox {
+    width: 100%;
     top: 10px;
 }
 
-.GitDashboard .returnToTrendingPageButton {
+.GitDashboard .container .returnToTrendingPageButton {
     position: absolute;
     margin-left: 10px;
-    opacity: 0;
-    height: 40px !important;
+    height: 40px;
     top: 10px;
 }
 

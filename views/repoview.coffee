@@ -9,7 +9,7 @@ class RepoView extends KDListItemView
         options.language    or= "Language"
         options.cssClass      = KD.utils.curry "repoview-container", options.cssClass
         options.url         or= ""
-        @kiteHelper           = options.kiteHelper
+        options.sshCloneUrl or= null
         @state                = NOT_CLONED
         @openDir              = "/"
         @controller           = options.controller
@@ -55,25 +55,20 @@ class RepoView extends KDListItemView
         new GitdashboardCloneModal
             repoView: @
             cloneUrl: @getOptions().cloneUrl
-            kiteHelper: @kiteHelper
+            dataManager: @controller.dataManager
 
     click:(event) ->
         {url} = @getOptions()
         window.open url,"_blank"
         
     updateState: =>
-        if not root.directoryExists
-            @state = NOT_CLONED
-            console.log @state
+        {name} = @getOptions()
+        if @controller.dataManager.repositoryIsListed name
+            @state = CLONED
+            @openDir = @controller.dataManager.getRepoDirectory name
         else
-            {name} = @getOptions()
-            console.log @controller.repositoryIsListed(name)+" "+name
-            if @controller.repositoryIsListed name
-                @state = CLONED
-                @openDir = @controller.getRepoDirectory name
-            else
-                @state = NOT_CLONED
-            @updateView()
+            @state = NOT_CLONED
+        @updateView()
     updateView: =>
         @cloneButton.enable()
         @cloneButton.unsetClass "state-cloned"
@@ -102,7 +97,7 @@ class RepoView extends KDListItemView
             @cloneButton.setTitle "Loading"
     
     writeInstalled: (path)=>
-        @controller.listRepository @getOptions().name, path
+        @controller.dataManager.listRepository @getOptions().name, path
         .then =>
             @updateState()
             
