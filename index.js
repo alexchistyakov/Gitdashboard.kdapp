@@ -1,6 +1,9 @@
-/* Compiled by kdc on Fri Aug 29 2014 18:26:27 GMT+0000 (UTC) */
+/* Compiled by kdc on Fri Aug 29 2014 18:35:09 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
+if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
+  var appView = window.appPreview
+}
 /* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/oauth.js */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = {
@@ -1259,30 +1262,31 @@ KiteHelper = (function(_super) {
   }
 
   KiteHelper.prototype.getReady = function() {
-    var _this = this;
-    return new Promise(function(resolve, reject) {
-      var JVM;
-      JVM = KD.remote.api.JVM;
-      return JVM.fetchVmsByContext(function(err, vms) {
-        var alias, kiteController, vm, _i, _len;
-        if (err) {
-          console.warn(err);
-        }
-        if (!vms) {
-          return reject(vms);
-        }
-        _this._vms = vms;
-        _this._kites = {};
-        kiteController = KD.singletons.kiteController;
-        for (_i = 0, _len = vms.length; _i < _len; _i++) {
-          vm = vms[_i];
-          alias = vm.hostnameAlias;
-          _this._kites[alias] = kiteController.getKite("os-" + vm.region, alias, 'os');
-        }
-        _this.emit('ready');
-        return resolve();
-      });
-    });
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        var JVM;
+        JVM = KD.remote.api.JVM;
+        return JVM.fetchVmsByContext(function(err, vms) {
+          var alias, kiteController, vm, _i, _len;
+          if (err) {
+            console.warn(err);
+          }
+          if (!vms) {
+            return reject(vms);
+          }
+          _this._vms = vms;
+          _this._kites = {};
+          kiteController = KD.singletons.kiteController;
+          for (_i = 0, _len = vms.length; _i < _len; _i++) {
+            vm = vms[_i];
+            alias = vm.hostnameAlias;
+            _this._kites[alias] = kiteController.getKite("os-" + vm.region, alias, 'os');
+          }
+          _this.emit('ready');
+          return resolve();
+        });
+      };
+    })(this));
   };
 
   KiteHelper.prototype.setDefaultVm = function(vm) {
@@ -1309,10 +1313,11 @@ KiteHelper = (function(_super) {
   };
 
   KiteHelper.prototype.getVms = function() {
-    var _this = this;
-    return this._vms.sort(function(a, b) {
-      return _this.getVMNumber(a) > _this.getVMNumber(b);
-    });
+    return this._vms.sort((function(_this) {
+      return function(a, b) {
+        return _this.getVMNumber(a) > _this.getVMNumber(b);
+      };
+    })(this));
   };
 
   KiteHelper.prototype.getVMNumber = function(_arg) {
@@ -1322,87 +1327,90 @@ KiteHelper = (function(_super) {
   };
 
   KiteHelper.prototype.turnOffVm = function(vm) {
-    var _this = this;
-    return new Promise(function(resolve, reject) {
-      return _this.getReady().then(function() {
-        var kite;
-        if (!(kite = _this._kites[vm])) {
-          return reject({
-            message: "No such kite for " + vm
-          });
-        }
-        return kite.vmOff().then(function() {
-          return _this.whenVmState(vm, "STOPPED").then(function() {
-            return resolve();
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        return _this.getReady().then(function() {
+          var kite;
+          if (!(kite = _this._kites[vm])) {
+            return reject({
+              message: "No such kite for " + vm
+            });
+          }
+          return kite.vmOff().then(function() {
+            return _this.whenVmState(vm, "STOPPED").then(function() {
+              return resolve();
+            })["catch"](reject);
           })["catch"](reject);
         })["catch"](reject);
-      })["catch"](reject);
-    });
+      };
+    })(this));
   };
 
   KiteHelper.prototype.whenVmState = function(vm, state) {
-    var _this = this;
-    return new Promise(function(resolve, reject) {
-      var repeat, timeout, vmController, wait;
-      vmController = KD.singletons.vmController;
-      timeout = 10 * 60 * 1000;
-      repeat = KD.utils.repeat(1000, function() {
-        return vmController.info(vm, function(err, vmn, info) {
-          if ((info != null ? info.state : void 0) === state) {
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        var repeat, timeout, vmController, wait;
+        vmController = KD.singletons.vmController;
+        timeout = 10 * 60 * 1000;
+        repeat = KD.utils.repeat(1000, function() {
+          return vmController.info(vm, function(err, vmn, info) {
+            if ((info != null ? info.state : void 0) === state) {
+              KD.utils.killRepeat(repeat);
+              KD.utils.killWait(wait);
+              return resolve();
+            }
+          });
+        });
+        return wait = KD.utils.wait(timeout, function() {
+          if (repeat != null) {
             KD.utils.killRepeat(repeat);
-            KD.utils.killWait(wait);
-            return resolve();
+            return reject();
           }
         });
-      });
-      return wait = KD.utils.wait(timeout, function() {
-        if (repeat != null) {
-          KD.utils.killRepeat(repeat);
-          return reject();
-        }
-      });
-    });
+      };
+    })(this));
   };
 
   KiteHelper.prototype.getKite = function() {
-    var _this = this;
-    return new Promise(function(resolve, reject) {
-      return _this.getReady().then(function() {
-        var kite, vm, vmController;
-        vm = _this.getVm();
-        vmController = KD.singletons.vmController;
-        if (!(kite = _this._kites[vm])) {
-          return reject({
-            message: "No such kite for " + vm
-          });
-        }
-        return vmController.info(vm, function(err, vmn, info) {
-          var timeout;
-          if (err) {
-            return reject(err);
+    return new Promise((function(_this) {
+      return function(resolve, reject) {
+        return _this.getReady().then(function() {
+          var kite, vm, vmController;
+          vm = _this.getVm();
+          vmController = KD.singletons.vmController;
+          if (!(kite = _this._kites[vm])) {
+            return reject({
+              message: "No such kite for " + vm
+            });
           }
-          if (!_this.vmIsStarting && info.state === "STOPPED") {
-            _this.vmIsStarting = true;
-            timeout = 10 * 60 * 1000;
-            kite.options.timeout = timeout;
-            return kite.vmOn().then(function() {
-              return _this.whenVmState(vm, "RUNNING").then(function() {
-                _this.vmIsStarting = false;
-                return resolve(kite);
-              })["catch"](function(err) {
+          return vmController.info(vm, function(err, vmn, info) {
+            var timeout;
+            if (err) {
+              return reject(err);
+            }
+            if (!_this.vmIsStarting && info.state === "STOPPED") {
+              _this.vmIsStarting = true;
+              timeout = 10 * 60 * 1000;
+              kite.options.timeout = timeout;
+              return kite.vmOn().then(function() {
+                return _this.whenVmState(vm, "RUNNING").then(function() {
+                  _this.vmIsStarting = false;
+                  return resolve(kite);
+                })["catch"](function(err) {
+                  _this.vmIsStarting = false;
+                  return reject(err);
+                });
+              }).timeout(timeout)["catch"](function(err) {
                 _this.vmIsStarting = false;
                 return reject(err);
               });
-            }).timeout(timeout)["catch"](function(err) {
-              _this.vmIsStarting = false;
-              return reject(err);
-            });
-          } else {
-            return resolve(kite);
-          }
+            } else {
+              return resolve(kite);
+            }
+          });
         });
-      });
-    });
+      };
+    })(this));
   };
 
   KiteHelper.prototype.run_old = function(options, callback) {
@@ -1478,20 +1486,21 @@ RepoDataManager = (function() {
   }
 
   RepoDataManager.prototype.readRepoData = function() {
-    var _this = this;
     return this.kiteHelper.run({
       command: "cat " + dataPath
-    }).then(function(readData) {
-      var data, dataLine, i, _i, _len, _results;
-      data = readData.stdout.split("\n");
-      _results = [];
-      for (_i = 0, _len = data.length; _i < _len; _i++) {
-        dataLine = data[_i];
-        i = dataLine.indexOf(" ");
-        _results.push(_this.repodata[dataLine.substring(0, i)] = dataLine.substring(i + 1));
-      }
-      return _results;
-    });
+    }).then((function(_this) {
+      return function(readData) {
+        var data, dataLine, i, _i, _len, _results;
+        data = readData.stdout.split("\n");
+        _results = [];
+        for (_i = 0, _len = data.length; _i < _len; _i++) {
+          dataLine = data[_i];
+          i = dataLine.indexOf(" ");
+          _results.push(_this.repodata[dataLine.substring(0, i)] = dataLine.substring(i + 1));
+        }
+        return _results;
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.repositoryIsListed = function(name) {
@@ -1505,34 +1514,37 @@ RepoDataManager = (function() {
   };
 
   RepoDataManager.prototype.gitPresentInRepoFolder = function(dir) {
-    var _this = this;
     return this.kiteHelper.run({
       command: "test -d " + dir + "/.git"
-    }).then(function(res) {
-      return res.exitStatus === 0;
-    });
+    }).then((function(_this) {
+      return function(res) {
+        return res.exitStatus === 0;
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.unlistRepository = function(name, path) {
-    var _this = this;
     if (this.repodata[name] != null) {
       delete this.repodata[name];
       return this.kiteHelper.run({
         command: "sed /" + path + "/d " + dataPath + " > " + dataPath
-      }).then(function(res) {
-        return res.exitStatus === 0;
-      });
+      }).then((function(_this) {
+        return function(res) {
+          return res.exitStatus === 0;
+        };
+      })(this));
     }
   };
 
   RepoDataManager.prototype.listRepository = function(name, path) {
-    var _this = this;
     this.repodata[name] = path;
     return this.kiteHelper.run({
       command: "sed /" + path + "/d " + dataPath + " > " + dataPath + "; echo " + name + " " + path + " >> " + dataPath
-    }).then(function(res) {
-      return res.exitStatus === 0;
-    });
+    }).then((function(_this) {
+      return function(res) {
+        return res.exitStatus === 0;
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.getRepoDirectory = function(name) {
@@ -1540,32 +1552,36 @@ RepoDataManager = (function() {
   };
 
   RepoDataManager.prototype.verifyRepoData = function() {
-    var keys,
-      _this = this;
+    var keys;
     keys = Object.keys(this.repodata);
-    return Promise.all(keys.map(function(key) {
-      return _this.gitPresentInRepoFolder(_this.repodata[key].then(function(present) {
-        if (!present) {
-          return key;
-        }
-      }));
-    })).then(function(results) {
-      results = results.filter(Boolean);
-      return Promise.all(results.map(function(data) {
-        return _this.unlistRepository(data, _this.getRepoDirectory(data));
-      }));
-    });
+    return Promise.all(keys.map((function(_this) {
+      return function(key) {
+        return _this.gitPresentInRepoFolder(_this.repodata[key]).then(function(present) {
+          if (!present) {
+            return key;
+          }
+        });
+      };
+    })(this))).then((function(_this) {
+      return function(results) {
+        results = results.filter(Boolean);
+        return Promise.all(results.map(function(data) {
+          return _this.unlistRepository(data, _this.getRepoDirectory(data));
+        }));
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.checkDataPath = function() {
-    var _this = this;
-    return this.kiteHelper.getKite().then(function(kite) {
-      return kite.fsExists({
-        path: dataPath
-      }).then(function(exists) {
-        return _this.directoryExists = exists;
-      });
-    });
+    return this.kiteHelper.getKite().then((function(_this) {
+      return function(kite) {
+        return kite.fsExists({
+          path: dataPath
+        }).then(function(exists) {
+          return _this.directoryExists = exists;
+        });
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.cloneRepo = function(name, url, path) {
@@ -1575,13 +1591,14 @@ RepoDataManager = (function() {
   };
 
   RepoDataManager.prototype.checkSSHKeys = function() {
-    var _this = this;
     return this.kiteHelper.run({
       command: "test -f ~/.ssh/id_rsa.pub && test -f ~/.ssh/id_rsa"
-    }).then(function(res) {
-      console.log(res);
-      return res.exitStatus === 0;
-    });
+    }).then((function(_this) {
+      return function(res) {
+        console.log(res);
+        return res.exitStatus === 0;
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.generateSSHKeys = function(email, passphrase) {
@@ -1594,22 +1611,24 @@ RepoDataManager = (function() {
   };
 
   RepoDataManager.prototype.readSSHKeys = function() {
-    var _this = this;
     return this.kiteHelper.run({
       command: "cat ~/.ssh/id_rsa.pub"
-    }).then(function(res) {
-      return res.stdout;
-    });
+    }).then((function(_this) {
+      return function(res) {
+        return res.stdout;
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.compareSSHKeys = function() {
-    var _this = this;
-    return this.readSSHKeys().then(function(key) {
-      return _this.token.get("/user/keys").done(function(res) {
-        console.log(res);
-        return true;
-      });
-    });
+    return this.readSSHKeys().then((function(_this) {
+      return function(key) {
+        return _this.token.get("/user/keys").done(function(res) {
+          console.log(res);
+          return true;
+        });
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.postSSHKey = function(key, title) {
@@ -1671,7 +1690,6 @@ VMSelectorView = (function(_super) {
   }
 
   VMSelectorView.prototype.viewAppended = function() {
-    var _this = this;
     console.log(this.kiteHelper.ready);
     this.addSubView(this.loader = new KDLoaderView({
       showLoader: true,
@@ -1679,22 +1697,24 @@ VMSelectorView = (function(_super) {
         width: 20
       }
     }));
-    this.kiteHelper.ready(function() {
-      _this.addSubView(_this.header = new KDCustomHTMLView({
-        tagName: 'div',
-        cssClass: 'header',
-        partial: _this.namify(_this.kiteHelper.getVm()),
-        click: function() {
-          return _this.selection.toggleClass("hidden");
-        }
-      }));
-      _this.addSubView(_this.selection = new KDCustomHTMLView({
-        tagName: 'div',
-        cssClass: 'selection hidden'
-      }));
-      _this.updateList();
-      return _this.loader.setClass("hidden");
-    });
+    this.kiteHelper.ready((function(_this) {
+      return function() {
+        _this.addSubView(_this.header = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: 'header',
+          partial: _this.namify(_this.kiteHelper.getVm()),
+          click: function() {
+            return _this.selection.toggleClass("hidden");
+          }
+        }));
+        _this.addSubView(_this.selection = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: 'selection hidden'
+        }));
+        _this.updateList();
+        return _this.loader.setClass("hidden");
+      };
+    })(this));
     return this.kiteHelper.getKite();
   };
 
@@ -1703,37 +1723,38 @@ VMSelectorView = (function(_super) {
   };
 
   VMSelectorView.prototype.updateList = function() {
-    var vmController,
-      _this = this;
+    var vmController;
     this.selection.updatePartial("");
     vmController = KD.singletons.vmController;
-    return this.kiteHelper.getVms().forEach(function(vm) {
-      var vmItem;
-      _this.selection.addSubView(vmItem = new KDCustomHTMLView({
-        tagName: 'div',
-        cssClass: "item",
-        click: function() {
-          if (!_this.hasClass("disabled")) {
-            return _this.chooseVm(vm.hostnameAlias);
+    return this.kiteHelper.getVms().forEach((function(_this) {
+      return function(vm) {
+        var vmItem;
+        _this.selection.addSubView(vmItem = new KDCustomHTMLView({
+          tagName: 'div',
+          cssClass: "item",
+          click: function() {
+            if (!_this.hasClass("disabled")) {
+              return _this.chooseVm(vm.hostnameAlias);
+            }
           }
+        }));
+        if (vm.hostnameAlias === _this.kiteHelper.getVm()) {
+          vmItem.setClass("active");
         }
-      }));
-      if (vm.hostnameAlias === _this.kiteHelper.getVm()) {
-        vmItem.setClass("active");
-      }
-      vmItem.addSubView(new KDCustomHTMLView({
-        tagName: 'span',
-        cssClass: "bubble"
-      }));
-      vmItem.addSubView(new KDCustomHTMLView({
-        tagName: 'span',
-        cssClass: "name",
-        partial: _this.namify(vm.hostnameAlias)
-      }));
-      return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
-        return vmItem.setClass(info != null ? info.state.toLowerCase() : void 0);
-      });
-    });
+        vmItem.addSubView(new KDCustomHTMLView({
+          tagName: 'span',
+          cssClass: "bubble"
+        }));
+        vmItem.addSubView(new KDCustomHTMLView({
+          tagName: 'span',
+          cssClass: "name",
+          partial: _this.namify(vm.hostnameAlias)
+        }));
+        return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
+          return vmItem.setClass(info != null ? info.state.toLowerCase() : void 0);
+        });
+      };
+    })(this));
   };
 
   VMSelectorView.prototype.chooseVm = function(vm) {
@@ -1746,7 +1767,6 @@ VMSelectorView = (function(_super) {
   };
 
   VMSelectorView.prototype.turnOffVm = function(vm, toMount) {
-    var _this = this;
     console.log(this.overlay);
     if (this.overlay == null) {
       this.overlay = new KDOverlayView({
@@ -1758,47 +1778,52 @@ VMSelectorView = (function(_super) {
       this.header.setClass("hidden");
       this.selection.setClass("hidden");
       this.loader.unsetClass("hidden");
-      return this.kiteHelper.turnOffVm(vm).then(function() {
-        return KD.utils.wait(10000, function() {
-          _this.chooseVm(toMount);
-          _this.updateList();
-          _this.header.unsetClass("hidden");
-          _this.selection.unsetClass("hidden");
-          _this.loader.setClass("hidden");
-          _this.overlay.remove();
-          return delete _this.overlay;
-        });
-      })["catch"](function(err) {
-        return console.log(err);
-      });
+      return this.kiteHelper.turnOffVm(vm).then((function(_this) {
+        return function() {
+          return KD.utils.wait(10000, function() {
+            _this.chooseVm(toMount);
+            _this.updateList();
+            _this.header.unsetClass("hidden");
+            _this.selection.unsetClass("hidden");
+            _this.loader.setClass("hidden");
+            _this.overlay.remove();
+            return delete _this.overlay;
+          });
+        };
+      })(this))["catch"]((function(_this) {
+        return function(err) {
+          return console.log(err);
+        };
+      })(this));
     }
   };
 
   VMSelectorView.prototype.turnOffVmModal = function(toMount) {
-    var container, vmController,
-      _this = this;
+    var container, vmController;
     if (!this.modal) {
       vmController = KD.singletons.vmController;
       this.addSubView(container = new KDCustomHTMLView({
         tagName: 'div'
       }));
-      this.kiteHelper.getVms().forEach(function(vm) {
-        var vmItem;
-        container.addSubView(vmItem = new KDCustomHTMLView({
-          tagName: 'div',
-          cssClass: "item",
-          partial: "<div class=\"bubble\"></div>\n" + vm.hostnameAlias,
-          click: function(event) {
-            _this.turnOffVm(vm.hostnameAlias, toMount);
-            return _this.removeModal();
-          }
-        }));
-        return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
-          if ((info != null ? info.state : void 0) !== "RUNNING") {
-            return vmItem.destroy();
-          }
-        });
-      });
+      this.kiteHelper.getVms().forEach((function(_this) {
+        return function(vm) {
+          var vmItem;
+          container.addSubView(vmItem = new KDCustomHTMLView({
+            tagName: 'div',
+            cssClass: "item",
+            partial: "<div class=\"bubble\"></div>\n" + vm.hostnameAlias,
+            click: function(event) {
+              _this.turnOffVm(vm.hostnameAlias, toMount);
+              return _this.removeModal();
+            }
+          }));
+          return vmController.info(vm.hostnameAlias, function(err, vmn, info) {
+            if ((info != null ? info.state : void 0) !== "RUNNING") {
+              return vmItem.destroy();
+            }
+          });
+        };
+      })(this));
       return this.modal = new KDModalView({
         title: "Choose VM To Turn Off",
         overlay: true,
@@ -1807,9 +1832,11 @@ VMSelectorView = (function(_super) {
         height: "auto",
         cssClass: "new-kdmodal",
         view: container,
-        cancel: function() {
-          return _this.removeModal();
-        }
+        cancel: (function(_this) {
+          return function() {
+            return _this.removeModal();
+          };
+        })(this)
       });
     }
   };
@@ -1840,7 +1867,6 @@ GitdashboardCloneModal = (function(_super) {
   __extends(GitdashboardCloneModal, _super);
 
   function GitdashboardCloneModal(options, data) {
-    var _this = this;
     if (options == null) {
       options = {};
     }
@@ -1857,18 +1883,19 @@ GitdashboardCloneModal = (function(_super) {
       contextMenu: false,
       loadFilesOnInit: true
     });
-    this.dataManager.kiteHelper.getKite().then(function(kite) {
-      _this.unmountAll();
-      _this.finderController.mountVm(_this.dataManager.kiteHelper.getVmByName(_this.dataManager.kiteHelper.getVm()));
-      return _this.finderController.isNodesHiddenFor = function() {
-        return true;
+    this.dataManager.kiteHelper.getKite().then((function(_this) {
+      return function(kite) {
+        _this.unmountAll();
+        _this.finderController.mountVm(_this.dataManager.kiteHelper.getVmByName(_this.dataManager.kiteHelper.getVm()));
+        return _this.finderController.isNodesHiddenFor = function() {
+          return true;
+        };
       };
-    });
+    })(this));
     GitdashboardCloneModal.__super__.constructor.call(this, options, data);
   }
 
   GitdashboardCloneModal.prototype.viewAppended = function() {
-    var _this = this;
     this.addSubView(this.nameInput = new KDInputView({
       placeholder: "Name"
     }));
@@ -1876,32 +1903,35 @@ GitdashboardCloneModal = (function(_super) {
     return this.addSubView(new KDButtonView({
       title: "Clone to my VM",
       cssClass: "cupid-green",
-      callback: function() {
-        if (_this.nameInput.getValue() !== "") {
-          return _this.beginClone();
-        }
-      }
+      callback: (function(_this) {
+        return function() {
+          if (_this.nameInput.getValue() !== "") {
+            return _this.beginClone();
+          }
+        };
+      })(this)
     }));
   };
 
   GitdashboardCloneModal.prototype.beginClone = function() {
-    var fullPath,
-      _this = this;
+    var fullPath;
     fullPath = this.finderController.treeController.selectedNodes[0].data.path + "/" + this.nameInput.getValue();
     fullPath = fullPath.substring(fullPath.indexOf("/"));
     console.log(fullPath);
     this.repoView.state = CLONING;
     this.repoView.updateView();
     this.destroy();
-    return this.dataManager.cloneRepo(this.repoView.getOptions().name, this.repoView.getOptions().cloneUrl, fullPath).then(function(cloned) {
-      if (!cloned) {
-        return new KDModalView({
-          title: "Error occured while cloning"
-        });
-      } else {
-        return _this.repoView.writeInstalled(fullPath);
-      }
-    });
+    return this.dataManager.cloneRepo(this.repoView.getOptions().name, this.repoView.getOptions().cloneUrl, fullPath).then((function(_this) {
+      return function(cloned) {
+        if (!cloned) {
+          return new KDModalView({
+            title: "Error occured while cloning"
+          });
+        } else {
+          return _this.repoView.writeInstalled(fullPath);
+        }
+      };
+    })(this));
   };
 
   GitdashboardCloneModal.prototype.unmountAll = function() {
@@ -2020,7 +2050,6 @@ RepoView = (function(_super) {
   };
 
   RepoView.prototype.updateView = function() {
-    var _this = this;
     this.cloneButton.enable();
     this.cloneButton.unsetClass("state-cloned");
     this.cloneButton.unsetClass("state-uncloned");
@@ -2032,9 +2061,11 @@ RepoView = (function(_super) {
     if (this.state === CLONED) {
       this.cloneButton.setClass("state-cloned");
       this.cloneButton.setTitle("Open");
-      return this.cloneButton.setCallback(function() {
-        return _this.controller.createTab(_this);
-      });
+      return this.cloneButton.setCallback((function(_this) {
+        return function() {
+          return _this.controller.createTab(_this);
+        };
+      })(this));
     } else if (this.state === NOT_CLONED) {
       this.cloneButton.setTitle("Clone");
       this.cloneButton.setCallback(this.cloneToMachine);
@@ -2051,10 +2082,11 @@ RepoView = (function(_super) {
   };
 
   RepoView.prototype.writeInstalled = function(path) {
-    var _this = this;
-    return this.controller.dataManager.listRepository(this.getOptions().name, path.then(function() {
-      return _this.updateState();
-    }));
+    return this.controller.dataManager.listRepository(this.getOptions().name, path).then((function(_this) {
+      return function() {
+        return _this.updateState();
+      };
+    })(this));
   };
 
   return RepoView;
@@ -2070,8 +2102,7 @@ RepoDataController = (function(_super) {
   __extends(RepoDataController, _super);
 
   function RepoDataController(options, data) {
-    var repoDataController,
-      _this = this;
+    var repoDataController;
     if (options == null) {
       options = {};
     }
@@ -2086,95 +2117,102 @@ RepoDataController = (function(_super) {
     RepoDataController.__super__.constructor.call(this, options, data);
     this.dataManager = options.dataManager;
     this.registerSingleton("repoDataController", this, true);
-    this.dataManager.checkDataPath().then(function(exists) {
-      if (exists) {
-        return _this.dataManager.readRepoData().then(function() {
-          return _this.dataManager.verifyRepoData().then(function() {
-            return _this.emit("path-checked");
+    this.dataManager.checkDataPath().then((function(_this) {
+      return function(exists) {
+        if (exists) {
+          return _this.dataManager.readRepoData().then(function() {
+            return _this.dataManager.verifyRepoData().then(function() {
+              return _this.emit("path-checked");
+            });
           });
-        });
-      }
-    });
+        }
+      };
+    })(this));
   }
 
   RepoDataController.prototype.getSearchedRepos = function(callback, topic) {
-    var link,
-      _this = this;
+    var link;
     link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars");
-    return $.getJSON(link).then(function(json) {
-      var i, options, _i;
-      for (i = _i = 0; 0 <= searchResultCount ? _i < searchResultCount : _i > searchResultCount; i = 0 <= searchResultCount ? ++_i : --_i) {
-        if (!(json.items[i] != null)) {
-          continue;
+    return $.getJSON(link).then((function(_this) {
+      return function(json) {
+        var i, options, _i;
+        for (i = _i = 0; 0 <= searchResultCount ? _i < searchResultCount : _i > searchResultCount; i = 0 <= searchResultCount ? ++_i : --_i) {
+          if (!(json.items[i] != null)) {
+            continue;
+          }
+          options = _this.generateOptions(json.items[i]);
+          _this.appendExtras(options);
+          callback(new RepoView(options));
         }
-        options = _this.generateOptions(json.items[i]);
-        _this.appendExtras(options);
-        callback(new RepoView(options));
-      }
-      return _this.emit("search-results-downloaded");
-    }).fail(function(err) {
-      return callback(false);
-    });
+        return _this.emit("search-results-downloaded");
+      };
+    })(this)).fail((function(_this) {
+      return function(err) {
+        return callback(false);
+      };
+    })(this));
   };
 
   RepoDataController.prototype.getTrendingRepos = function(callback) {
-    var _this = this;
-    return this.appStorage.fetchStorage(function() {
-      return Promise.all(searchKeywords.map(function(topic) {
-        var link;
-        link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars&order=desc");
-        return $.getJSON(link).then(function(json) {
-          var i, _i, _results;
-          _results = [];
-          for (i = _i = 0; 0 <= reposPerTopic ? _i < reposPerTopic : _i > reposPerTopic; i = 0 <= reposPerTopic ? ++_i : --_i) {
-            if (json.items[i] != null) {
-              _results.push(_this.generateOptions(json.items[i]));
+    return this.appStorage.fetchStorage((function(_this) {
+      return function() {
+        return Promise.all(searchKeywords.map(function(topic) {
+          var link;
+          link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars&order=desc");
+          return $.getJSON(link).then(function(json) {
+            var i, _i, _results;
+            _results = [];
+            for (i = _i = 0; 0 <= reposPerTopic ? _i < reposPerTopic : _i > reposPerTopic; i = 0 <= reposPerTopic ? ++_i : --_i) {
+              if (json.items[i] != null) {
+                _results.push(_this.generateOptions(json.items[i]));
+              }
             }
+            return _results;
+          });
+        })).then(function(results) {
+          var repoO, repos, _i, _len;
+          repos = _this.formatResults(results);
+          for (_i = 0, _len = repos.length; _i < _len; _i++) {
+            repoO = repos[_i];
+            _this.appendExtras(repoO);
+            callback(new RepoView(repoO));
           }
-          return _results;
+          _this.emit("trending-page-downloaded");
+          return KD.utils.defer(function() {
+            return _this.appStorage.setValue("repos", JSON.stringify(repos));
+          });
+        })["catch"](function(err) {
+          return KD.utils.defer(function() {
+            var decode, option, options, value, _i, _len;
+            console.log(err);
+            value = _this.appStorage.getValue("repos");
+            decode = value.replace(/&quot;/g, "\"");
+            options = JSON.parse(decode);
+            for (_i = 0, _len = options.length; _i < _len; _i++) {
+              option = options[_i];
+              _this.appendExtras(option);
+              callback(new RepoView(option));
+            }
+            return _this.emit("trending-page-downloaded");
+          });
         });
-      })).then(function(results) {
-        var repoO, repos, _i, _len;
-        repos = _this.formatResults(results);
-        for (_i = 0, _len = repos.length; _i < _len; _i++) {
-          repoO = repos[_i];
-          _this.appendExtras(repoO);
-          callback(new RepoView(repoO));
-        }
-        _this.emit("trending-page-downloaded");
-        return KD.utils.defer(function() {
-          return _this.appStorage.setValue("repos", JSON.stringify(repos));
-        });
-      })["catch"](function(err) {
-        return KD.utils.defer(function() {
-          var decode, option, options, value, _i, _len;
-          console.log(err);
-          value = _this.appStorage.getValue("repos");
-          decode = value.replace(/&quot;/g, "\"");
-          options = JSON.parse(decode);
-          for (_i = 0, _len = options.length; _i < _len; _i++) {
-            option = options[_i];
-            _this.appendExtras(option);
-            callback(new RepoView(option));
-          }
-          return _this.emit("trending-page-downloaded");
-        });
-      });
-    });
+      };
+    })(this));
   };
 
   RepoDataController.prototype.getMyRepos = function(callback, authToken) {
-    var _this = this;
-    return authToken.get("/user/repos").done(function(response) {
-      var options, repo, _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = response.length; _i < _len; _i++) {
-        repo = response[_i];
-        options = _this.appendExtras(_this.generateOptions(repo));
-        _results.push(callback(new RepoView(options)));
-      }
-      return _results;
-    }).fail(function(err) {
+    return authToken.get("/user/repos").done((function(_this) {
+      return function(response) {
+        var options, repo, _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = response.length; _i < _len; _i++) {
+          repo = response[_i];
+          options = _this.appendExtras(_this.generateOptions(repo));
+          _results.push(callback(new RepoView(options)));
+        }
+        return _results;
+      };
+    })(this)).fail(function(err) {
       return console.log(err);
     });
   };
@@ -2238,22 +2276,23 @@ GitdashboardSearchPaneView = (function(_super) {
   }
 
   GitdashboardSearchPaneView.prototype.viewAppended = function() {
-    var _this = this;
     this.addSubView(this.searchBox = new KDInputView({
       cssClass: "searchBox",
       placeholder: "Search..."
     }));
-    this.searchBox.on('keydown', function(e) {
-      var loading;
-      if (e.keyCode === 13) {
-        if (!loading || !Boolean(_this.searchBox.getValue())) {
-          loading = true;
-          _this.loader.show();
-          _this.container.empty();
-          return _this.controller.getSearchedRepos(_this.repoReceived, _this.searchBox.getValue());
+    this.searchBox.on('keydown', (function(_this) {
+      return function(e) {
+        var loading;
+        if (e.keyCode === 13) {
+          if (!loading || !Boolean(_this.searchBox.getValue())) {
+            loading = true;
+            _this.loader.show();
+            _this.container.empty();
+            return _this.controller.getSearchedRepos(_this.repoReceived, _this.searchBox.getValue());
+          }
         }
-      }
-    });
+      };
+    })(this));
     this.addSubView(this.loader = new KDLoaderView({
       showLoader: false
     }));
@@ -2442,18 +2481,18 @@ GitDashboardMainView = (function(_super) {
   };
 
   GitDashboardMainView.prototype.oauthAuthentication = function() {
-    var _this = this;
     return OAuth.popup("github", {
-      cache: true.done(function(result) {
+      cache: true
+    }).done((function(_this) {
+      return function(result) {
         return _this.initPersonal(result);
-      }).fail(function(err) {
-        return console.log(err);
-      })
+      };
+    })(this)).fail(function(err) {
+      return console.log(err);
     });
   };
 
   GitDashboardMainView.prototype.initPersonal = function(token) {
-    var _this = this;
     this.tabView.addPane(this.myReposPagePane = new KDTabPaneView({
       title: "My Repos",
       closable: false
@@ -2464,115 +2503,121 @@ GitDashboardMainView = (function(_super) {
     }));
     this.loginButton.hide();
     this.dataManager.token = token;
-    return this.dataManager.checkSSHKeys().then(function(exist) {
-      var container, modal;
-      if (!exist) {
-        container = new KDView({
-          partial: "No SSH keys were found on your VM. They are needed to clone private repositories. Would you like us to generate and add them for you?"
-        });
-        container.addSubView(new KDButtonView({
-          title: "Sure",
-          cssClass: "cupid-green",
-          callback: function() {
-            modal.destroy();
-            return OAuth.create("github").me().then(function(me) {
-              var input, modal;
+    return this.dataManager.checkSSHKeys().then((function(_this) {
+      return function(exist) {
+        var container, modal;
+        if (!exist) {
+          container = new KDView({
+            partial: "No SSH keys were found on your VM. They are needed to clone private repositories. Would you like us to generate and add them for you?"
+          });
+          container.addSubView(new KDButtonView({
+            title: "Sure",
+            cssClass: "cupid-green",
+            callback: function() {
+              modal.destroy();
+              return OAuth.create("github").me().then(function(me) {
+                var input, modal;
+                container = new KDView({
+                  partial: "Please enter a passphrase for your SSH keys and press enter. If you do not want to set a passphrase, leave the field empty"
+                });
+                container.addSubView(input = new KDInputView({
+                  placeholder: "Passphrase",
+                  type: "password"
+                }));
+                input.on('keydown', function(e) {
+                  if (e.keyCode === 13) {
+                    return _this.dataManager.generateSSHKeys(me.email, input.getValue() ? input.getValue() : void 0).then(function() {
+                      return _this.dataManager.postSSHKey();
+                    });
+                  }
+                });
+                return modal = new KDModalView;
+              });
+            }
+          }));
+          container.addSubView(new KDButtonView({
+            title: "No thanks",
+            cssClass: "small-gray",
+            callback: function() {
+              return modal.destroy();
+            }
+          }));
+          return modal = new KDModalView({
+            title: "SSH keys not found",
+            overlay: true,
+            overlayClick: false,
+            width: 400,
+            height: "auto",
+            cssClass: "new-kdmodal",
+            view: container
+          });
+        } else {
+          return _this.dataManager.compareSSHKeys().then(function(item) {
+            if (item == null) {
               container = new KDView({
-                partial: "Please enter a passphrase for your SSH keys and press enter. If you do not want to set a passphrase, leave the field empty"
+                partial: "Your SSH keys are not on GitHub. You will not be able to clone private repos. Would you like us to add them for you?"
               });
-              container.addSubView(input = new KDInputView({
-                placeholder: "Passphrase",
-                type: "password"
-              }));
-              input.on('keydown', function(e) {
-                if (e.keyCode === 13) {
-                  return _this.dataManager.generateSSHKeys(me.email, input.getValue() ? input.getValue() : void 0).then(function() {
-                    return _this.dataManager.postSSHKey();
-                  });
+              container.addSubView(new KDButtonView({
+                title: "Sure",
+                cssClass: "cupid-green",
+                callback: function() {
+                  modal.destroy();
+                  return _this.dataManager.postSSHKey();
                 }
+              }));
+              container.addSubView(new KDButtonView({
+                title: "No thanks",
+                cssClass: "small-gray",
+                callback: function() {
+                  return modal.destroy();
+                }
+              }));
+              return modal = new KDModalView({
+                title: "SSH keys not on GitHub",
+                overlay: true,
+                overlayClick: false,
+                width: 400,
+                height: "auto",
+                cssClass: "new-kdmodal",
+                view: container
               });
-              return modal = new KDModalView;
-            });
-          }
-        }));
-        container.addSubView(new KDButtonView({
-          title: "No thanks",
-          cssClass: "small-gray",
-          callback: function() {
-            return modal.destroy();
-          }
-        }));
-        return modal = new KDModalView({
-          title: "SSH keys not found",
-          overlay: true,
-          overlayClick: false,
-          width: 400,
-          height: "auto",
-          cssClass: "new-kdmodal",
-          view: container
-        });
-      } else {
-        return _this.dataManager.compareSSHKeys().then(function(item) {
-          if (item == null) {
-            container = new KDView({
-              partial: "Your SSH keys are not on GitHub. You will not be able to clone private repos. Would you like us to add them for you?"
-            });
-            container.addSubView(new KDButtonView({
-              title: "Sure",
-              cssClass: "cupid-green",
-              callback: function() {
-                modal.destroy();
-                return _this.dataManager.postSSHKey();
-              }
-            }));
-            container.addSubView(new KDButtonView({
-              title: "No thanks",
-              cssClass: "small-gray",
-              callback: function() {
-                return modal.destroy();
-              }
-            }));
-            return modal = new KDModalView({
-              title: "SSH keys not on GitHub",
-              overlay: true,
-              overlayClick: false,
-              width: 400,
-              height: "auto",
-              cssClass: "new-kdmodal",
-              view: container
-            });
-          }
-        });
-      }
-    });
+            }
+          });
+        }
+      };
+    })(this));
   };
 
   GitDashboardMainView.prototype.switchVm = function(vm) {
-    var _this = this;
-    return this.kiteHelper.getKite().then(function(kite) {
-      _this.overlay.remove();
-      return delete _this.overlay;
-    })["catch"](function(err) {
-      return _this.vmSelector.turnOffVmModal(vm);
-    });
+    return this.kiteHelper.getKite().then((function(_this) {
+      return function(kite) {
+        _this.overlay.remove();
+        return delete _this.overlay;
+      };
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        return _this.vmSelector.turnOffVmModal(vm);
+      };
+    })(this));
   };
 
   GitDashboardMainView.prototype.openConsoleTab = function(repoView) {
-    var _this = this;
-    return KD.singletons.appManager.require('Terminal', function() {
-      _this.tabView.addPane(_this.terminalPaneTab = new KDTabPaneView({
-        title: repoView.getOptions().name,
-        cssClass: "terminal-pane",
-        closable: true
-      }));
-      _this.terminalPaneTab.setMainView(_this.terminal = new TerminalPane({
-        cssClass: "terminal"
-      }));
-      window.test = _this.terminal;
-      $(window).trigger("resize");
-      _this.terminal.runCommand("clear");
-      return _this.terminal.runCommand("cd " + repoView.openDir);
-    });
+    return KD.singletons.appManager.require('Terminal', (function(_this) {
+      return function() {
+        _this.tabView.addPane(_this.terminalPaneTab = new KDTabPaneView({
+          title: repoView.getOptions().name,
+          cssClass: "terminal-pane",
+          closable: true
+        }));
+        _this.terminalPaneTab.setMainView(_this.terminal = new TerminalPane({
+          cssClass: "terminal"
+        }));
+        window.test = _this.terminal;
+        $(window).trigger("resize");
+        _this.terminal.runCommand("clear");
+        return _this.terminal.runCommand("cd " + repoView.openDir);
+      };
+    })(this));
   };
 
   return GitDashboardMainView;

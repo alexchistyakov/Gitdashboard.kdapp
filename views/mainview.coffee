@@ -42,7 +42,7 @@ class GitDashboardMainView extends KDView
             @initPersonal token
             
     oauthAuthentication: =>
-        OAuth.popup "github", cache: true
+        OAuth.popup("github", cache: true)
         .done (result) =>
             @initPersonal result
         .fail (err) ->
