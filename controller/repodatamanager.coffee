@@ -74,7 +74,6 @@ class RepoDataManager
     generateSSHKeys: (email,passphrase="") =>
         @kiteHelper.run
             command: "echo -e \"\n#{passphrase}\n#{passphrase}\n\" | ssh-keygen -t rsa -C #{email}"
-        console.log email+" "+passphrase
     readSSHKeys: =>
         @kiteHelper.run
             command: "cat ~/.ssh/id_rsa.pub"
