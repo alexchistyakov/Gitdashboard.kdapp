@@ -1,4 +1,4 @@
-/* Compiled by kdc on Thu Aug 28 2014 22:49:34 GMT+0000 (UTC) */
+/* Compiled by kdc on Fri Aug 29 2014 18:06:25 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1467,7 +1467,7 @@ RepoDataManager = (function() {
     }
     this.postSSHKey = __bind(this.postSSHKey, this);
     this.compareSSHKeys = __bind(this.compareSSHKeys, this);
-    this.readSSHKey = __bind(this.readSSHKey, this);
+    this.readSSHKeys = __bind(this.readSSHKeys, this);
     this.generateSSHKeys = __bind(this.generateSSHKeys, this);
     this.checkSSHKeys = __bind(this.checkSSHKeys, this);
     this.cloneRepo = __bind(this.cloneRepo, this);
@@ -1479,7 +1479,7 @@ RepoDataManager = (function() {
     this.gitPresentInRepoFolder = __bind(this.gitPresentInRepoFolder, this);
     this.repositoryIsListed = __bind(this.repositoryIsListed, this);
     this.readRepoData = __bind(this.readRepoData, this);
-    this.token = OAuth.create("github");
+    this.token = null;
     this.kiteHelper = options.kiteHelper;
     this.useSSHCloneProtocol = false;
     this.repodata = {};
@@ -1539,7 +1539,7 @@ RepoDataManager = (function() {
   RepoDataManager.prototype.listRepository = function(name, path) {
     this.repodata[name] = path;
     return this.kiteHelper.run({
-      command: "echo " + name + " " + path + " >> " + dataPath
+      command: "sed /" + path + "/d " + dataPath + " > " + dataPath + "; echo " + name + " " + path + " >> " + dataPath
     }).then((function(_this) {
       return function(res) {
         return res.exitStatus === 0;
@@ -1584,9 +1584,9 @@ RepoDataManager = (function() {
     })(this));
   };
 
-  RepoDataManager.prototype.cloneRepo = function(url, path) {
+  RepoDataManager.prototype.cloneRepo = function(name, url, path) {
     return this.kiteHelper.run({
-      command: "git clone " + url + " " + path
+      command: "git clone " + url + " " + path + "; echo " + name + " " + path + " >> " + dataPath
     });
   };
 
@@ -1610,7 +1610,7 @@ RepoDataManager = (function() {
     });
   };
 
-  RepoDataManager.prototype.readSSHKey = function() {
+  RepoDataManager.prototype.readSSHKeys = function() {
     return this.kiteHelper.run({
       command: "cat ~/.ssh/id_rsa.pub"
     }).then((function(_this) {
@@ -1621,18 +1621,11 @@ RepoDataManager = (function() {
   };
 
   RepoDataManager.prototype.compareSSHKeys = function() {
-    return this.token.get("/user/keys").done((function(_this) {
-      return function(res) {
-        return readSSHKey().then(function(key) {
-          var item, _i, _len, _results;
-          _results = [];
-          for (_i = 0, _len = items.length; _i < _len; _i++) {
-            item = items[_i];
-            if (item.key === key) {
-              _results.push(item);
-            }
-          }
-          return _results;
+    return this.readSSHKeys().then((function(_this) {
+      return function(key) {
+        return _this.token.get("/user/keys").done(function(res) {
+          console.log(res);
+          return true;
         });
       };
     })(this));
@@ -1928,7 +1921,7 @@ GitdashboardCloneModal = (function(_super) {
     this.repoView.state = CLONING;
     this.repoView.updateView();
     this.destroy();
-    return this.dataManager.cloneRepo(this.repoView.getOptions().cloneUrl, fullPath).then((function(_this) {
+    return this.dataManager.cloneRepo(this.repoView.getOptions().name, this.repoView.getOptions().cloneUrl, fullPath).then((function(_this) {
       return function(cloned) {
         if (!cloned) {
           return new KDModalView({
@@ -2435,6 +2428,7 @@ GitDashboardMainView = (function(_super) {
     options.cssClass = 'GitDashboard';
     GitDashboardMainView.__super__.constructor.call(this, options, data);
     this.kiteHelper = new KiteHelper;
+    window.kh = this.kiteHelper;
     this.dataManager = new RepoDataManager({
       kiteHelper: this.kiteHelper
     });
@@ -2445,7 +2439,7 @@ GitDashboardMainView = (function(_super) {
   }
 
   GitDashboardMainView.prototype.viewAppended = function() {
-    var handle, _i, _len, _ref;
+    var handle, token, _i, _len, _ref;
     this.addSubView(this.loginButton = new KDButtonView({
       cssClass: "login-button",
       title: "Connect with GitHub",
@@ -2481,8 +2475,8 @@ GitDashboardMainView = (function(_super) {
       container: this,
       cssClass: "vm-selector"
     }));
-    if (OAuth.create("github") === !false) {
-      return this.initPersonal();
+    if (token = OAuth.create("github") === !false) {
+      return this.initPersonal(token);
     }
   };
 
@@ -2491,23 +2485,24 @@ GitDashboardMainView = (function(_super) {
       cache: true
     }).done((function(_this) {
       return function(result) {
-        return _this.initPersonal();
+        return _this.initPersonal(result);
       };
     })(this)).fail(function(err) {
       return console.log(err);
     });
   };
 
-  GitDashboardMainView.prototype.initPersonal = function() {
+  GitDashboardMainView.prototype.initPersonal = function(token) {
     this.tabView.addPane(this.myReposPagePane = new KDTabPaneView({
       title: "My Repos",
       closable: false
     }));
     this.myReposPagePane.setMainView(new GitDashboardMyReposPageView({
-      authToken: OAuth.create("github"),
+      authToken: token,
       dataController: this.controller
     }));
     this.loginButton.hide();
+    this.dataManager.token = token;
     return this.dataManager.checkSSHKeys().then((function(_this) {
       return function(exist) {
         var container, modal;
@@ -2520,8 +2515,23 @@ GitDashboardMainView = (function(_super) {
             cssClass: "cupid-green",
             callback: function() {
               modal.destroy();
-              return _this.dataManager.generateSSHKeys().then(function() {
-                return _this.dataManager.postSSHKey();
+              return OAuth.create("github").me().then(function(me) {
+                var input, modal;
+                container = new KDView({
+                  partial: "Please enter a passphrase for your SSH keys and press enter. If you do not want to set a passphrase, leave the field empty"
+                });
+                container.addSubView(input = new KDInputView({
+                  placeholder: "Passphrase",
+                  type: "password"
+                }));
+                input.on('keydown', function(e) {
+                  if (e.keyCode === 13) {
+                    return _this.dataManager.generateSSHKeys(me.email, input.getValue() ? input.getValue() : void 0).then(function() {
+                      return _this.dataManager.postSSHKey();
+                    });
+                  }
+                });
+                return modal = new KDModalView;
               });
             }
           }));
@@ -2552,9 +2562,7 @@ GitDashboardMainView = (function(_super) {
                 cssClass: "cupid-green",
                 callback: function() {
                   modal.destroy();
-                  return _this.dataManager.generateSSHKeys().then(function() {
-                    return _this.dataManager.postSSHKey();
-                  });
+                  return _this.dataManager.postSSHKey();
                 }
               }));
               container.addSubView(new KDButtonView({

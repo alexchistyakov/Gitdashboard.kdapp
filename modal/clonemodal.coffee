@@ -38,7 +38,7 @@ class GitdashboardCloneModal extends KDModalView
     @repoView.state = CLONING
     @repoView.updateView()
     @destroy()
-    @dataManager.cloneRepo(@repoView.getOptions().cloneUrl, fullPath).then (cloned) =>
+    @dataManager.cloneRepo(@repoView.getOptions().name,@repoView.getOptions().cloneUrl, fullPath).then (cloned) =>
         if not cloned
             new KDModalView
                 title: "Error occured while cloning"

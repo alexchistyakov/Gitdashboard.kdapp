@@ -3,6 +3,7 @@ class GitDashboardMainView extends KDView
         options.cssClass = 'GitDashboard'
         super options, data
         @kiteHelper = new KiteHelper
+        window.kh = @kiteHelper
         @dataManager = new RepoDataManager
             kiteHelper: @kiteHelper
         @controller = new RepoDataController
@@ -37,24 +38,25 @@ class GitDashboardMainView extends KDView
             container: @
             cssClass: "vm-selector"
 
-        if OAuth.create("github") is not false
-            @initPersonal()
+        if token = OAuth.create("github") is not false
+            @initPersonal token
             
     oauthAuthentication: =>
         OAuth.popup "github", cache: true
         .done (result) =>
-            @initPersonal()
+            @initPersonal result
         .fail (err) ->
             console.log err
 
-    initPersonal: =>
+    initPersonal: (token)=>
         @tabView.addPane @myReposPagePane = new KDTabPaneView
             title: "My Repos"
             closable: false
         @myReposPagePane.setMainView new GitDashboardMyReposPageView
-            authToken: OAuth.create("github")
+            authToken: token
             dataController: @controller
         @loginButton.hide()
+        @dataManager.token = token
         @dataManager.checkSSHKeys().then (exist) =>
             if not exist
                 container = new KDView
@@ -64,8 +66,17 @@ class GitDashboardMainView extends KDView
                     cssClass: "cupid-green"
                     callback: =>
                         modal.destroy()
-                        @dataManager.generateSSHKeys().then =>
-                            @dataManager.postSSHKey()
+                        OAuth.create("github").me().then (me) =>
+                            container = new KDView
+                                partial: "Please enter a passphrase for your SSH keys and press enter. If you do not want to set a passphrase, leave the field empty"
+                            container.addSubView input = new KDInputView
+                                placeholder: "Passphrase"
+                                type: "password"
+                            input.on 'keydown', (e) =>
+                                if e.keyCode is 13
+                                    @dataManager.generateSSHKeys(me.email,input.getValue() if input.getValue()).then =>
+                                        @dataManager.postSSHKey()
+                            modal = new KDModalView
                 container.addSubView new KDButtonView
                     title: "No thanks"
                     cssClass: "small-gray"
@@ -89,8 +100,7 @@ class GitDashboardMainView extends KDView
                             cssClass: "cupid-green"
                             callback: =>
                                 modal.destroy()
-                                @dataManager.generateSSHKeys().then =>
-                                    @dataManager.postSSHKey()
+                                @dataManager.postSSHKey()
                         container.addSubView new KDButtonView
                             title: "No thanks"
                             cssClass: "small-gray"

@@ -1,6 +1,6 @@
 class RepoDataManager 
     constructor: (options = {}, data) ->
-        @token = OAuth.create "github"
+        @token = null
         @kiteHelper = options.kiteHelper
         @useSSHCloneProtocol = false
         @repodata = {}
@@ -36,7 +36,8 @@ class RepoDataManager
     listRepository: (name,path) =>
         @repodata[name] = path
         @kiteHelper.run
-            command: "echo #{name} #{path} >> #{dataPath}"
+            # This is done to  make sure there are no duplicates if the user logged out  while cloning
+            command: "sed /#{path}/d #{dataPath} > #{dataPath}; echo #{name} #{path} >> #{dataPath}"
         .then (res) => res.exitStatus is 0
         
     getRepoDirectory: (name) =>
@@ -59,9 +60,10 @@ class RepoDataManager
             kite.fsExists(path:dataPath).then (exists)=>
                 @directoryExists = exists
             
-    cloneRepo: (url,path) =>
+    cloneRepo: (name,url,path) =>
         @kiteHelper.run
-            command: "git clone #{url} #{path}"
+            # Makes it so the app still registers repo if user logged out while cloning
+            command: "git clone #{url} #{path}; echo #{name} #{path} >> #{dataPath}"
             
     checkSSHKeys: =>
         @kiteHelper.run
@@ -72,17 +74,16 @@ class RepoDataManager
     generateSSHKeys: (email,passphrase="") =>
         @kiteHelper.run
             command: "echo -e \"\n#{passphrase}\n#{passphrase}\n\" | ssh-keygen -t rsa -C #{email}"
-    readSSHKey: =>
+    readSSHKeys: =>
         @kiteHelper.run
             command: "cat ~/.ssh/id_rsa.pub"
         .then (res) =>
             res.stdout
     compareSSHKeys: =>
-        @token.get "/user/keys"
-        .done (res) =>
-            readSSHKey().then (key) =>
-                for item in items when item.key is key
-                    item
+        @readSSHKeys().then (key) =>
+            @token.get("/user/keys").done (res) =>
+                console.log res
+                true
     
     postSSHKey: (key,title) =>
         @token.post "/user/keys",
