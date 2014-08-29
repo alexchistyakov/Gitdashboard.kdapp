@@ -1,4 +1,4 @@
-/* Compiled by kdc on Fri Aug 29 2014 18:43:55 GMT+0000 (UTC) */
+/* Compiled by kdc on Fri Aug 29 2014 18:51:04 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1607,7 +1607,11 @@ RepoDataManager = (function() {
     }
     return this.kiteHelper.run({
       command: "echo -e \"\n" + passphrase + "\n" + passphrase + "\n\" | ssh-keygen -t rsa -C " + email
-    });
+    })["catch"]((function(_this) {
+      return function(err) {
+        return console.log(err);
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.readSSHKeys = function() {
