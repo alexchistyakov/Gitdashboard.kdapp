@@ -1,4 +1,4 @@
-/* Compiled by kdc on Fri Aug 29 2014 18:35:09 GMT+0000 (UTC) */
+/* Compiled by kdc on Fri Aug 29 2014 18:43:55 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -2531,7 +2531,15 @@ GitDashboardMainView = (function(_super) {
                     });
                   }
                 });
-                return modal = new KDModalView;
+                return modal = new KDModalView({
+                  title: "SSH keys not found",
+                  overlay: true,
+                  overlayClick: false,
+                  width: 400,
+                  height: "auto",
+                  cssClass: "new-kdmodal",
+                  view: container
+                });
               });
             }
           }));

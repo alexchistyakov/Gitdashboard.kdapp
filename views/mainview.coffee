@@ -77,6 +77,13 @@ class GitDashboardMainView extends KDView
                                     @dataManager.generateSSHKeys(me.email,input.getValue() if input.getValue()).then =>
                                         @dataManager.postSSHKey()
                             modal = new KDModalView
+                                title: "SSH keys not found"
+                                overlay         : yes
+                                overlayClick    : no
+                                width           : 400
+                                height          : "auto"
+                                cssClass        : "new-kdmodal"
+                                view            : container
                 container.addSubView new KDButtonView
                     title: "No thanks"
                     cssClass: "small-gray"
