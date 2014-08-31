@@ -26,29 +26,27 @@ class RepoDataController extends KDController
     
     getTrendingRepos:(callback)->
         @appStorage.fetchStorage =>
-            Promise.all(searchKeywords.map (topic) =>
-                link = encodeURI("https://api.github.com/search/repositories?q=#{topic}&sort=stars&order=desc")
-                return $.getJSON(link).then (json) =>
-                    for i in [0...reposPerTopic] when json.items[i]?
-                        @generateOptions(json.items[i])
-            ).then (results) =>
-                repos = @formatResults(results)
-                for repoO in repos
-                    @appendExtras(repoO)
-                    callback(new RepoView repoO)
+            date = new Date
+            date.setDate(date.getDate() - 7)
+            link = encodeURI "https://api.github.com/search/repositories?q=created:>#{date.toISOString().substring 0,date.toISOString().indexOf "T"}&sort=stars&order=desc"
+            $.getJSON(link).then (json) =>
+                allOptions = []
+                for i in [0...reposInTrending] when json.items[i]?
+                    options = @generateOptions json.items[i]
+                    allOptions.push options
+                    callback new RepoView(@appendExtras options)
+                KD.utils.defer =>
+                    @appStorage.setValue "repos" , JSON.stringify allOptions
                 @emit "trending-page-downloaded"
-                KD.utils.defer =>
-                    @appStorage.setValue "repos" , JSON.stringify repos
-            .catch (err) =>
-                KD.utils.defer =>
-                    console.log err
-                    value = @appStorage.getValue("repos")
-                    decode = value.replace(/&quot;/g,"\"")
-                    options = JSON.parse decode
-                    for option in options
-                        @appendExtras(option)
-                        callback(new RepoView option)
-                    @emit "trending-page-downloaded"
+            .fail (err) =>
+                console.log err
+                value = @appStorage.getValue("repos")
+                decode = value.replace(/&quot;/g,"\"")
+                options = JSON.parse decode
+                for option in options
+                    @appendExtras(option)
+                    callback(new RepoView option)
+                @emit "trending-page-downloaded"
 
     getMyRepos:(callback,authToken)->
         authToken.get("/user/repos")
@@ -60,11 +58,9 @@ class RepoDataController extends KDController
             console.log err
 
     formatResults: (results) ->
-        repos = flatten(results)
-        repos = bubbleSort(repos)
-        if repos.length > reposInTrending 
-            repos = repos[0...reposInTrending]
-        return repos
+        if results.length > reposInTrending 
+            results = results[0...reposInTrending]
+        return results
     generateOptions: (item) ->
         {
             name: item.name

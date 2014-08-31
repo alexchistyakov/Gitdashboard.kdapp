@@ -1,4 +1,4 @@
-/* Compiled by kdc on Sun Aug 31 2014 12:18:10 GMT+0000 (UTC) */
+/* Compiled by kdc on Sun Aug 31 2014 17:06:11 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1222,17 +1222,13 @@ module.exports = function(document) {
 };
 
 },{}]},{},[4])/* BLOCK STARTS: /home/axchistyakov/Applications/Gitdashboard.kdapp/config.coffee */
-var CLONED, CLONING, LOADING, NOT_CLONED, dataPath, maxSymbolsInDescription, oauthKey, reposInTrending, reposPerTopic, searchKeywords, searchResultCount, _ref;
+var CLONED, CLONING, LOADING, NOT_CLONED, dataPath, maxSymbolsInDescription, oauthKey, reposInTrending, searchResultCount, _ref;
 
 _ref = [0, 1, 2], NOT_CLONED = _ref[0], CLONING = _ref[1], CLONED = _ref[2], LOADING = _ref[3];
-
-searchKeywords = ["coffeescript", "web", "data", "package", "code", "create"];
 
 searchResultCount = 50;
 
 reposInTrending = 50;
-
-reposPerTopic = 10;
 
 maxSymbolsInDescription = 100;
 
@@ -2193,45 +2189,37 @@ RepoDataController = (function(_super) {
   RepoDataController.prototype.getTrendingRepos = function(callback) {
     return this.appStorage.fetchStorage((function(_this) {
       return function() {
-        return Promise.all(searchKeywords.map(function(topic) {
-          var link;
-          link = encodeURI("https://api.github.com/search/repositories?q=" + topic + "&sort=stars&order=desc");
-          return $.getJSON(link).then(function(json) {
-            var i, _i, _results;
-            _results = [];
-            for (i = _i = 0; 0 <= reposPerTopic ? _i < reposPerTopic : _i > reposPerTopic; i = 0 <= reposPerTopic ? ++_i : --_i) {
-              if (json.items[i] != null) {
-                _results.push(_this.generateOptions(json.items[i]));
-              }
+        var date, link;
+        date = new Date;
+        date.setDate(date.getDate() - 7);
+        link = encodeURI("https://api.github.com/search/repositories?q=created:>" + (date.toISOString().substring(0, date.toISOString().indexOf("T"))) + "&sort=stars&order=desc");
+        return $.getJSON(link).then(function(json) {
+          var allOptions, i, options, _i;
+          allOptions = [];
+          for (i = _i = 0; 0 <= reposInTrending ? _i < reposInTrending : _i > reposInTrending; i = 0 <= reposInTrending ? ++_i : --_i) {
+            if (!(json.items[i] != null)) {
+              continue;
             }
-            return _results;
-          });
-        })).then(function(results) {
-          var repoO, repos, _i, _len;
-          repos = _this.formatResults(results);
-          for (_i = 0, _len = repos.length; _i < _len; _i++) {
-            repoO = repos[_i];
-            _this.appendExtras(repoO);
-            callback(new RepoView(repoO));
+            options = _this.generateOptions(json.items[i]);
+            allOptions.push(options);
+            callback(new RepoView(_this.appendExtras(options)));
           }
-          _this.emit("trending-page-downloaded");
-          return KD.utils.defer(function() {
-            return _this.appStorage.setValue("repos", JSON.stringify(repos));
+          KD.utils.defer(function() {
+            return _this.appStorage.setValue("repos", JSON.stringify(allOptions));
           });
-        })["catch"](function(err) {
-          return KD.utils.defer(function() {
-            var decode, option, options, value, _i, _len;
-            console.log(err);
-            value = _this.appStorage.getValue("repos");
-            decode = value.replace(/&quot;/g, "\"");
-            options = JSON.parse(decode);
-            for (_i = 0, _len = options.length; _i < _len; _i++) {
-              option = options[_i];
-              _this.appendExtras(option);
-              callback(new RepoView(option));
-            }
-            return _this.emit("trending-page-downloaded");
-          });
+          return _this.emit("trending-page-downloaded");
+        }).fail(function(err) {
+          var decode, option, options, value, _i, _len;
+          console.log(err);
+          value = _this.appStorage.getValue("repos");
+          decode = value.replace(/&quot;/g, "\"");
+          options = JSON.parse(decode);
+          for (_i = 0, _len = options.length; _i < _len; _i++) {
+            option = options[_i];
+            _this.appendExtras(option);
+            callback(new RepoView(option));
+          }
+          return _this.emit("trending-page-downloaded");
         });
       };
     })(this));
@@ -2255,13 +2243,10 @@ RepoDataController = (function(_super) {
   };
 
   RepoDataController.prototype.formatResults = function(results) {
-    var repos;
-    repos = flatten(results);
-    repos = bubbleSort(repos);
-    if (repos.length > reposInTrending) {
-      repos = repos.slice(0, reposInTrending);
+    if (results.length > reposInTrending) {
+      results = results.slice(0, reposInTrending);
     }
-    return repos;
+    return results;
   };
 
   RepoDataController.prototype.generateOptions = function(item) {
