@@ -50,11 +50,15 @@ class RepoDataManager
             .then (present) =>
                 if not present
                     key
+            .catch (err) =>
+                console.log err
         ).then (results) =>
             results = results.filter(Boolean)
             Promise.all( results.map (data) =>
                 @unlistRepository data, @getRepoDirectory data
             )
+        .catch (err) =>
+            console.log err
     checkDataPath: =>
         @kiteHelper.getKite().then (kite) =>
             kite.fsExists(path:dataPath).then (exists)=>
@@ -71,21 +75,38 @@ class RepoDataManager
         .then (res) =>
             console.log res
             res.exitStatus is 0
+        .catch (err) =>
+            console.log err
     generateSSHKeys: (email,passphrase="") =>
         @kiteHelper.run
-            command: "echo -e \"\n#{passphrase}\n#{passphrase}\n\" | ssh-keygen -t rsa -C #{email}"
+            command: "echo -e \"\n\n\n\" | ssh-keygen -t rsa -N #{passphrase} -C #{email}"
+        .catch (err) =>
+            console.log err
     readSSHKeys: =>
         @kiteHelper.run
             command: "cat ~/.ssh/id_rsa.pub"
         .then (res) =>
             res.stdout
-    compareSSHKeys: =>
-        @readSSHKeys().then (key) =>
-            @token.get("/user/keys").done (res) =>
-                console.log res
-                true
+        .catch (err) =>
+            console.log err
+    compareSSHKeys: (callback)=>
+        @token.get("/user/keys").done (res) =>
+            @readSSHKeys().then (key) =>
+                ret = false
+                for onlineKey in res
+                    if onlineKey.key is key.substring 0,key.lastIndexOf " "
+                        ret = true
+                callback(ret)
     
-    postSSHKey: (key,title) =>
-        @token.post "/user/keys",
-            title: title
-            key: key
+    postSSHKey: (title) =>
+        @readSSHKeys().then (key) =>
+            @token.post "/user/keys",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                "data": JSON.stringify
+                    "title": "Koding@"+title.substring(0,title.indexOf ".")
+                    "key": key
+            .done (res) =>
+                console.log res
+            .fail (err) =>
+                console.log err

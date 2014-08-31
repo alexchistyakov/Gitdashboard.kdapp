@@ -6,6 +6,7 @@ class GitDashboardMainView extends KDView
         window.kh = @kiteHelper
         @dataManager = new RepoDataManager
             kiteHelper: @kiteHelper
+        window.dm = @dataManager
         @controller = new RepoDataController
             dataManager: @dataManager
         @controller.on "tab-open-request", @bound "openConsoleTab"
@@ -75,7 +76,8 @@ class GitDashboardMainView extends KDView
                             input.on 'keydown', (e) =>
                                 if e.keyCode is 13
                                     @dataManager.generateSSHKeys(me.email,input.getValue() if input.getValue()).then =>
-                                        @dataManager.postSSHKey()
+                                        @dataManager.postSSHKey(@kiteHelper.getVm()).then =>
+                                            modal.destroy()
                             modal = new KDModalView
                                 title: "SSH keys not found"
                                 overlay         : yes
@@ -98,8 +100,8 @@ class GitDashboardMainView extends KDView
                     cssClass        : "new-kdmodal"
                     view            : container
             else
-                @dataManager.compareSSHKeys().then (item) =>
-                    if not item?
+                @dataManager.compareSSHKeys (exists) =>
+                    unless exists
                         container = new KDView
                             partial: "Your SSH keys are not on GitHub. You will not be able to clone private repos. Would you like us to add them for you?"
                         container.addSubView new KDButtonView
@@ -107,7 +109,7 @@ class GitDashboardMainView extends KDView
                             cssClass: "cupid-green"
                             callback: =>
                                 modal.destroy()
-                                @dataManager.postSSHKey()
+                                @dataManager.postSSHKey(@kiteHelper.getVm())
                         container.addSubView new KDButtonView
                             title: "No thanks"
                             cssClass: "small-gray"

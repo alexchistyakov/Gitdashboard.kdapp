@@ -1,4 +1,4 @@
-/* Compiled by kdc on Fri Aug 29 2014 19:09:30 GMT+0000 (UTC) */
+/* Compiled by kdc on Sun Aug 31 2014 12:18:10 GMT+0000 (UTC) */
 (function() {
 /* KDAPP STARTS */
 if (typeof window.appPreview !== "undefined" && window.appPreview !== null) {
@@ -1560,6 +1560,8 @@ RepoDataManager = (function() {
           if (!present) {
             return key;
           }
+        })["catch"](function(err) {
+          return console.log(err);
         });
       };
     })(this))).then((function(_this) {
@@ -1568,6 +1570,10 @@ RepoDataManager = (function() {
         return Promise.all(results.map(function(data) {
           return _this.unlistRepository(data, _this.getRepoDirectory(data));
         }));
+      };
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        return console.log(err);
       };
     })(this));
   };
@@ -1598,6 +1604,10 @@ RepoDataManager = (function() {
         console.log(res);
         return res.exitStatus === 0;
       };
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        return console.log(err);
+      };
     })(this));
   };
 
@@ -1606,8 +1616,12 @@ RepoDataManager = (function() {
       passphrase = "";
     }
     return this.kiteHelper.run({
-      command: "echo -e \"\n" + passphrase + "\n" + passphrase + "\n\" | ssh-keygen -t rsa -C " + email
-    });
+      command: "echo -e \"\n\n\n\" | ssh-keygen -t rsa -N " + passphrase + " -C " + email
+    })["catch"]((function(_this) {
+      return function(err) {
+        return console.log(err);
+      };
+    })(this));
   };
 
   RepoDataManager.prototype.readSSHKeys = function() {
@@ -1617,25 +1631,48 @@ RepoDataManager = (function() {
       return function(res) {
         return res.stdout;
       };
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        return console.log(err);
+      };
     })(this));
   };
 
-  RepoDataManager.prototype.compareSSHKeys = function() {
-    return this.readSSHKeys().then((function(_this) {
-      return function(key) {
-        return _this.token.get("/user/keys").done(function(res) {
-          console.log(res);
-          return true;
+  RepoDataManager.prototype.compareSSHKeys = function(callback) {
+    return this.token.get("/user/keys").done((function(_this) {
+      return function(res) {
+        return _this.readSSHKeys().then(function(key) {
+          var onlineKey, ret, _i, _len;
+          ret = false;
+          for (_i = 0, _len = res.length; _i < _len; _i++) {
+            onlineKey = res[_i];
+            if (onlineKey.key === key.substring(0, key.lastIndexOf(" "))) {
+              ret = true;
+            }
+          }
+          return callback(ret);
         });
       };
     })(this));
   };
 
-  RepoDataManager.prototype.postSSHKey = function(key, title) {
-    return this.token.post("/user/keys", {
-      title: title,
-      key: key
-    });
+  RepoDataManager.prototype.postSSHKey = function(title) {
+    return this.readSSHKeys().then((function(_this) {
+      return function(key) {
+        return _this.token.post("/user/keys", {
+          contentType: "application/json; charset=utf-8",
+          dataType: "json",
+          "data": JSON.stringify({
+            "title": "Koding@" + title.substring(0, title.indexOf(".")),
+            "key": key
+          })
+        }).done(function(res) {
+          return console.log(res);
+        }).fail(function(err) {
+          return console.log(err);
+        });
+      };
+    })(this));
   };
 
   return RepoDataManager;
@@ -2432,6 +2469,7 @@ GitDashboardMainView = (function(_super) {
     this.dataManager = new RepoDataManager({
       kiteHelper: this.kiteHelper
     });
+    window.dm = this.dataManager;
     this.controller = new RepoDataController({
       dataManager: this.dataManager
     });
@@ -2527,7 +2565,9 @@ GitDashboardMainView = (function(_super) {
                 input.on('keydown', function(e) {
                   if (e.keyCode === 13) {
                     return _this.dataManager.generateSSHKeys(me.email, input.getValue() ? input.getValue() : void 0).then(function() {
-                      return _this.dataManager.postSSHKey();
+                      return _this.dataManager.postSSHKey(_this.kiteHelper.getVm()).then(function() {
+                        return modal.destroy();
+                      });
                     });
                   }
                 });
@@ -2560,8 +2600,8 @@ GitDashboardMainView = (function(_super) {
             view: container
           });
         } else {
-          return _this.dataManager.compareSSHKeys().then(function(item) {
-            if (item == null) {
+          return _this.dataManager.compareSSHKeys(function(exists) {
+            if (!exists) {
               container = new KDView({
                 partial: "Your SSH keys are not on GitHub. You will not be able to clone private repos. Would you like us to add them for you?"
               });
@@ -2570,7 +2610,7 @@ GitDashboardMainView = (function(_super) {
                 cssClass: "cupid-green",
                 callback: function() {
                   modal.destroy();
-                  return _this.dataManager.postSSHKey();
+                  return _this.dataManager.postSSHKey(_this.kiteHelper.getVm());
                 }
               }));
               container.addSubView(new KDButtonView({
